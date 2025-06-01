@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  username  String     @unique
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  feedbacks Feedback[] // <-- this line connects the relation
+  liked     Feedback[] @relation("FeedbackLikes")
+  isAdmin   Boolean    @default(false) // ← add this line
+}
+
+enum FeedbackStatus {
+  pending
+  approved
+  rejected
+}
+
+model Feedback {
+  id       Int            @id @default(autoincrement())
+  title    String
+  message  String
+  date     DateTime       @default(now())
+  likes    Int            @default(0)
+  userId   Int
+  user     User           @relation(fields: [userId], references: [id])
+  likedBy  User[]         @relation("FeedbackLikes")
+  status   FeedbackStatus @default(pending) // This must exist
+}
+

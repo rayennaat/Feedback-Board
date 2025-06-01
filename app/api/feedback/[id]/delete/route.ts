@@ -46,4 +46,4 @@ export async function DELETE(req: NextRequest) {
     console.error('Delete error:', err)
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 })
   }
-}
+}//delete

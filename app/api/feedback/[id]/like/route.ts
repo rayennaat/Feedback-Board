@@ -1,77 +1,78 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = process.env.JWT_SECRET!
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const feedbackId = parseInt(params.id);
-
-  if (isNaN(feedbackId)) {
-    return NextResponse.json({ error: 'Invalid feedback ID' }, { status: 400 });
-  }
-
-  const token = req.cookies.get('authToken')?.value;
+export async function POST(req: NextRequest) {
+  const token = req.cookies.get('authToken')?.value
 
   if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let userId: number;
+  let userId: number
   try {
-    const decoded: any = jwt.verify(token, JWT_SECRET);
-    userId = decoded.id;
+    const decoded: any = jwt.verify(token, JWT_SECRET)
+    userId = decoded.id
   } catch (err) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
   }
 
-  // Check if the user has already liked this feedback
+  const url = new URL(req.url)
+  const idParam = url.pathname.split('/').at(-2) // extract [id] from `/api/feedback/[id]/like`
+  const feedbackId = parseInt(idParam || '')
+
+  if (isNaN(feedbackId)) {
+    return NextResponse.json({ error: 'Invalid feedback ID' }, { status: 400 })
+  }
+
   const feedback = await prisma.feedback.findUnique({
     where: { id: feedbackId },
-    include: { likedBy: true }
-  });
+    include: { likedBy: true },
+  })
 
   if (!feedback) {
-    return NextResponse.json({ error: 'Feedback not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Feedback not found' }, { status: 404 })
   }
 
-  const alreadyLiked = feedback.likedBy.some(user => user.id === userId);
+  const alreadyLiked = feedback.likedBy.some((user) => user.id === userId)
 
-  let updatedFeedback;
+  let updatedFeedback
 
   if (alreadyLiked) {
-    // Unlike: remove user from likedBy and decrement likes
+    // Unlike
     updatedFeedback = await prisma.feedback.update({
       where: { id: feedbackId },
       data: {
         likes: { decrement: 1 },
         likedBy: {
-          disconnect: { id: userId }
-        }
+          disconnect: { id: userId },
+        },
       },
       include: {
-        likedBy: true
-      }
-    });
+        likedBy: true,
+      },
+    })
   } else {
-    // Like: add user to likedBy and increment likes
+    // Like
     updatedFeedback = await prisma.feedback.update({
       where: { id: feedbackId },
       data: {
         likes: { increment: 1 },
         likedBy: {
-          connect: { id: userId }
-        }
+          connect: { id: userId },
+        },
       },
       include: {
-        likedBy: true
-      }
-    });
+        likedBy: true,
+      },
+    })
   }
 
   return NextResponse.json({
     message: alreadyLiked ? 'Unliked' : 'Liked',
     likes: updatedFeedback.likes,
-    likedBy: updatedFeedback.likedBy.map(user => user.id)
-  });
+    likedBy: updatedFeedback.likedBy.map((user) => user.id),
+  })
 }

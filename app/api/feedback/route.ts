@@ -15,7 +15,13 @@ export async function POST(req: NextRequest) {
 
   let userId: number
   try {
-    const decoded: any = jwt.verify(token, JWT_SECRET)
+interface JwtPayload {
+  id: number;
+  username: string;
+  // add other properties if needed
+}
+
+const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     userId = decoded.id
   } catch {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
@@ -48,7 +54,13 @@ export async function GET(req: NextRequest) {
 
   if (token) {
     try {
-      const decoded: any = jwt.verify(token, JWT_SECRET)
+interface JwtPayload {
+  id: number;
+  username: string;
+  // add other properties if needed
+}
+
+const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
       currentUserId = decoded.id
     } catch {
       currentUserId = null

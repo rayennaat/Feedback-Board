@@ -13,11 +13,19 @@ export async function PATCH(req: NextRequest) {
 
   let userId: number
   try {
-    const decoded: any = jwt.verify(token, JWT_SECRET)
+interface JwtPayload {
+  id: number;
+  username: string;
+  // add other properties if needed
+}
+
+const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     userId = decoded.id
   } catch (err) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-  }
+  console.error('Error:', err);
+  return NextResponse.json({ error: 'Invalid Token' }, { status: 500 });
+}
+
 
   const url = new URL(req.url)
   const idParam = url.pathname.split('/').at(-2)

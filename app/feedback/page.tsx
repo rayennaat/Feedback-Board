@@ -4,9 +4,21 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
+interface FeedbackItem {
+  id: number;
+  title: string;
+  message: string;
+  date: string;
+  user: string;
+  likes: number;
+  isLiked: boolean;
+  isCurrentUser?: boolean; // if you plan to use this for filtering 'mine'
+}
+
+
 export default function FeedbackPage() {
 
-  const [feedback, setFeedback] = useState<any[]>([]);
+  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
 
   useEffect(() => {
   const fetchFeedback = async () => {
@@ -22,7 +34,7 @@ export default function FeedbackPage() {
       }
 
       const data = await res.json();
-      setFeedback(data.map((item: any) => ({
+      setFeedback(data.map((item: any): FeedbackItem => ({
   ...item,
   isLiked: item.likedByCurrentUser
 })));

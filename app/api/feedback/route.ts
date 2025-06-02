@@ -4,6 +4,11 @@ import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET!
 
+interface JwtPayload {
+  id: number
+  username: string
+}
+
 // POST: Submit feedback
 export async function POST(req: NextRequest) {
   const { title, message } = await req.json()
@@ -15,15 +20,10 @@ export async function POST(req: NextRequest) {
 
   let userId: number
   try {
-interface JwtPayload {
-  id: number;
-  username: string;
-  // add other properties if needed
-}
-
-const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
     userId = decoded.id
-  } catch {
+  } catch (err) {
+    console.error('Token error:', err)
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
   }
 
@@ -54,15 +54,10 @@ export async function GET(req: NextRequest) {
 
   if (token) {
     try {
-interface JwtPayload {
-  id: number;
-  username: string;
-  // add other properties if needed
-}
-
-const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+      const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
       currentUserId = decoded.id
-    } catch {
+    } catch (err) {
+      console.error('Token decode error:', err)
       currentUserId = null
     }
   }
@@ -96,7 +91,8 @@ const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     }))
 
     return NextResponse.json(formatted)
-  } catch {
+  } catch (err) {
+    console.error('Fetch error:', err)
     return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 })
   }
 }

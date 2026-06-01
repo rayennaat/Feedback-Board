@@ -9,6 +9,9 @@ interface JwtPayload {
   username: string
 }
 
+const allowedStatuses = ['pending', 'approved', 'rejected'] as const
+type FeedbackStatus = (typeof allowedStatuses)[number]
+
 export async function PATCH(req: NextRequest) {
   const token = req.cookies.get('authToken')?.value
 
@@ -16,11 +19,20 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  let userId: number
+
   try {
-    // userId not needed here, so not stored
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
+    userId = decoded.id
   } catch (err) {
     console.error('Token verification failed:', err)
-    return NextResponse.json({ error: 'Invalid Token' }, { status: 500 })
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+
+  if (!user?.isAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const url = new URL(req.url)
@@ -32,7 +44,6 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { status } = await req.json()
-  const allowedStatuses = ['pending', 'approved', 'rejected']
 
   if (!allowedStatuses.includes(status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
@@ -41,7 +52,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const updated = await prisma.feedback.update({
       where: { id: feedbackId },
-      data: { status },
+      data: { status: status as FeedbackStatus },
     })
 
     return NextResponse.json(updated)

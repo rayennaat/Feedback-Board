@@ -7,10 +7,12 @@ export default function SignupPage() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false) // Add state for password visibility
+  const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
 
     try {
       const res = await fetch('/api/signup', {
@@ -24,87 +26,76 @@ export default function SignupPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        alert(data.error || 'Something went wrong')
-      } else {
-        // Optionally redirect to login or dashboard
-        window.location.href = '/login'
+        setError(data.error || 'Something went wrong')
+        return
       }
-    } catch (error) {
-      console.error('Signup error:', error)
-      alert('Failed to sign up. Please try again.')
+
+      window.location.href = '/login'
+    } catch (err) {
+      console.error('Signup error:', err)
+      setError('Failed to sign up. Please try again.')
     }
   }
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword)
-  }
-
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Create an Account</h1>
-        <form onSubmit={handleSignup} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Username</label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border text-gray-800 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-600 mb-1">Password</label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border text-gray-800 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-            />
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute right-3 top-[34px] text-gray-500 hover:text-gray-700 focus:outline-none"
-            >
-              {showPassword ? (
-                // When password is visible (text), show eye with slash                
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              ) : (
-                // When password is hidden (dots), show normal eye
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-              )}
+    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-950">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center justify-center">
+        <section className="w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <Link href="/" className="text-sm font-medium text-slate-500 hover:text-slate-950">Feedback Board</Link>
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-950">Create an account</h1>
+          <p className="mt-2 text-sm text-slate-600">Start submitting and tracking product feedback.</p>
+
+          <form onSubmit={handleSignup} className="mt-6 space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Username</label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-300 px-4 py-2.5 text-slate-950 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-300 px-4 py-2.5 text-slate-950 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Password</label>
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-4 py-2.5 pr-16 text-slate-950 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500 hover:text-slate-900"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+            {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</p>}
+            <button type="submit" className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+              Sign up
             </button>
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Sign Up
-          </button>
-        </form>
-        <p className="text-sm text-center text-gray-600 mt-6">
-          Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Log in
-          </Link>
-        </p>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-slate-600">
+            Already have an account?{' '}
+            <Link href="/login" className="font-semibold text-blue-700 hover:text-blue-800">Log in</Link>
+          </p>
+        </section>
       </div>
     </main>
   )

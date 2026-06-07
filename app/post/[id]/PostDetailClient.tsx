@@ -1,6 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
@@ -28,6 +30,7 @@ interface PostState {
   city: string
   experienceType: string
   isAnonymous: boolean
+  proofImageUrl: string
   likes: number
   commentsCount: number
   date: string
@@ -39,6 +42,7 @@ interface PostState {
 
 interface CommentItem {
   id: number
+  parentId: number | null
   message: string
   date: string
   user: string
@@ -51,6 +55,7 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
   const [currentUser, setCurrentUser] = useState<UserState | null>(null)
   const [comments, setComments] = useState<CommentItem[]>([])
   const [commentDraft, setCommentDraft] = useState('')
+  const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null)
   const [anonymousComment, setAnonymousComment] = useState(false)
   const [reportingTarget, setReportingTarget] = useState<{ type: 'feedback' | 'comment'; id: number } | null>(null)
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
@@ -151,7 +156,7 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
     }
   }
 
-  const handleAddComment = async () => {
+  const handleAddComment = async (parentId?: number) => {
     if (!requireAuth('Log in to reply.')) return
 
     const message = commentDraft.trim()
@@ -161,7 +166,7 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ message, isAnonymous: anonymousComment })
+      body: JSON.stringify({ message, isAnonymous: anonymousComment, parentId })
     })
     const data = await res.json()
 
@@ -174,11 +179,19 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
     setPost(prev => ({ ...prev, commentsCount: prev.commentsCount + 1 }))
     setCommentDraft('')
     setAnonymousComment(false)
+    setReplyTarget(null)
     toast.success('Reply added')
   }
 
   const handleDeleteComment = async (commentId: number) => {
     if (!window.confirm('Delete this comment?')) return
+
+    const idsToRemove = new Set<number>()
+    const collectBranch = (id: number) => {
+      idsToRemove.add(id)
+      comments.filter(comment => comment.parentId === id).forEach(comment => collectBranch(comment.id))
+    }
+    collectBranch(commentId)
 
     const res = await fetch(`/api/comments/${commentId}/delete`, {
       method: 'DELETE',
@@ -191,8 +204,9 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
       return
     }
 
-    setComments(prev => prev.filter(comment => comment.id !== commentId))
-    setPost(prev => ({ ...prev, commentsCount: Math.max(0, prev.commentsCount - 1) }))
+    setComments(prev => prev.filter(comment => !idsToRemove.has(comment.id)))
+    setPost(prev => ({ ...prev, commentsCount: Math.max(0, prev.commentsCount - idsToRemove.size) }))
+    if (replyTarget && idsToRemove.has(replyTarget.id)) setReplyTarget(null)
     toast.success('Comment deleted')
   }
 
@@ -240,6 +254,37 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
     toast.success('Share link copied')
   }
 
+
+  const topLevelComments = comments.filter(comment => comment.parentId === null)
+  const repliesByParent = comments.reduce<Record<number, CommentItem[]>>((acc, comment) => {
+    if (comment.parentId === null) return acc
+    acc[comment.parentId] = [...(acc[comment.parentId] || []), comment]
+    return acc
+  }, {})
+
+  const renderComment = (comment: CommentItem, depth = 0): ReactNode => {
+    const childReplies = repliesByParent[comment.id] || []
+
+    return (
+      <div key={comment.id} className={depth > 0 ? 'ml-4 border-l border-slate-200 pl-4 sm:ml-6' : ''}>
+        <div className="rounded-md border border-slate-200 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm leading-6 text-slate-700">{comment.message}</p>
+              <p className="mt-1 text-xs text-slate-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
+            </div>
+            <div className="flex gap-2 text-xs font-medium">
+              <button onClick={() => setReplyTarget(comment)} className="text-blue-600 hover:text-blue-800">Reply</button>
+              <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-slate-500 hover:text-slate-950">Report</button>
+              {comment.isCurrentUser && <button onClick={() => handleDeleteComment(comment.id)} className="text-red-600 hover:text-red-800">Delete</button>}
+            </div>
+          </div>
+        </div>
+        {childReplies.length > 0 && <div className="mt-3 space-y-3">{childReplies.map(reply => renderComment(reply, depth + 1))}</div>}
+      </div>
+    )
+  }
+
   return (
     <article>
       <Toaster position="top-right" />
@@ -253,6 +298,7 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
         <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">{post.title}</h1>
         <p className="mt-2 text-sm font-medium text-slate-500">About {post.subject}</p>
         <p className="mt-5 whitespace-pre-wrap text-base leading-7 text-slate-700">{post.message}</p>
+        {post.proofImageUrl && <Image src={post.proofImageUrl} alt="Proof attached to this post" width={1100} height={720} className="mt-5 max-h-[520px] w-full rounded-md border border-slate-200 bg-white object-contain" />}
 
         <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -280,30 +326,23 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
         <div className="mt-4 space-y-3">
           {comments.length === 0 ? (
             <p className="text-sm text-slate-500">No replies yet.</p>
-          ) : comments.map(comment => (
-            <div key={comment.id} className="rounded-md border border-slate-200 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm leading-6 text-slate-700">{comment.message}</p>
-                  <p className="mt-1 text-xs text-slate-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
-                </div>
-                <div className="flex gap-2 text-xs font-medium">
-                  <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-slate-500 hover:text-slate-950">Report</button>
-                  {comment.isCurrentUser && <button onClick={() => handleDeleteComment(comment.id)} className="text-red-600 hover:text-red-800">Delete</button>}
-                </div>
-              </div>
-            </div>
-          ))}
+          ) : topLevelComments.map(comment => renderComment(comment))}
         </div>
 
         <div className="mt-5 space-y-3">
-          <textarea value={commentDraft} onChange={(e) => setCommentDraft(e.target.value)} rows={4} placeholder="Reply with your experience or advice..." className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+          {replyTarget && (
+            <div className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+              <span>Replying to {replyTarget.user}</span>
+              <button onClick={() => setReplyTarget(null)} className="font-semibold hover:text-blue-700">Cancel</button>
+            </div>
+          )}
+          <textarea value={commentDraft} onChange={(e) => setCommentDraft(e.target.value)} rows={4} placeholder={replyTarget ? `Reply to ${replyTarget.user}...` : 'Reply with your experience or advice...'} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <label className="flex items-center gap-2 text-sm text-slate-600">
               <input type="checkbox" checked={anonymousComment} onChange={(e) => setAnonymousComment(e.target.checked)} />
               Reply anonymously
             </label>
-            <button onClick={handleAddComment} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Add Reply</button>
+            <button onClick={() => handleAddComment(replyTarget?.id)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">{replyTarget ? 'Reply' : 'Add Reply'}</button>
           </div>
         </div>
       </section>

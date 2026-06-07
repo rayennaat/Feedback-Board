@@ -39,6 +39,7 @@ model Feedback {
   city           String         @default("")
   experienceType String         @default("Question")
   isAnonymous    Boolean        @default(false)
+  proofImageUrl  String         @default("")
   date           DateTime       @default(now())
   likes          Int            @default(0)
   userId         Int
@@ -59,11 +60,16 @@ model Comment {
   isAnonymous Boolean @default(false)
   isHidden    Boolean @default(false)
   hiddenReason String @default("")
+  parentId   Int?
+  parent     Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
   feedbackId Int
   feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
   userId     Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   reports    Report[]
+
+  @@index([parentId])
 }
 
 enum ReportTargetType {

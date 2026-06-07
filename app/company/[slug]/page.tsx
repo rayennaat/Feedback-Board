@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -73,6 +74,7 @@ export default async function CompanyPage({ params }: PageProps) {
               </div>
               <Link href={`/post/${post.id}`} className="mt-3 block text-lg font-semibold text-slate-950 hover:text-blue-700">{post.title}</Link>
               <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{post.message}</p>
+              {post.proofImageUrl && <Image src={post.proofImageUrl} alt="Proof attached to this post" width={760} height={430} className="mt-3 max-h-48 w-full rounded-md border border-slate-200 bg-white object-contain" />}
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
                 <span>By {post.isAnonymous ? 'Anonymous' : post.user.username}</span>
                 <span>{new Date(post.date).toLocaleDateString()}</span>

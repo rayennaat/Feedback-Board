@@ -10,6 +10,10 @@ interface JwtPayload {
 }
 
 const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+const sanitizeProofImageUrl = (value: unknown) => {
+  const proofImageUrl = trimValue(value)
+  return proofImageUrl.startsWith('/uploads/proofs/') ? proofImageUrl : ''
+}
 
 // POST: Submit a public experience post
 export async function POST(req: NextRequest) {
@@ -21,6 +25,7 @@ export async function POST(req: NextRequest) {
   const city = trimValue(body.city)
   const experienceType = trimValue(body.experienceType)
   const isAnonymous = Boolean(body.isAnonymous)
+  const proofImageUrl = sanitizeProofImageUrl(body.proofImageUrl)
 
   const token = req.cookies.get('authToken')?.value
   if (!token) {
@@ -55,6 +60,7 @@ export async function POST(req: NextRequest) {
       city,
       experienceType,
       isAnonymous,
+      proofImageUrl,
       user: {
         connect: { id: userId }
       }
@@ -73,6 +79,7 @@ export async function POST(req: NextRequest) {
     city: newFeedback.city,
     experienceType: newFeedback.experienceType,
     isAnonymous: newFeedback.isAnonymous,
+    proofImageUrl: newFeedback.proofImageUrl,
     likes: newFeedback.likes,
     date: newFeedback.date.toISOString(),
     user: newFeedback.isAnonymous ? 'Anonymous' : newFeedback.user.username,
@@ -127,6 +134,7 @@ export async function GET(req: NextRequest) {
       city: item.city,
       experienceType: item.experienceType,
       isAnonymous: item.isAnonymous,
+      proofImageUrl: item.proofImageUrl,
       likes: item.likes,
       commentsCount: item._count.comments,
       date: item.date.toISOString(),

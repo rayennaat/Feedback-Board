@@ -84,6 +84,7 @@ export default async function PostDetailPage({ params }: PageProps) {
             city: post.city,
             experienceType: post.experienceType,
             isAnonymous: post.isAnonymous,
+            proofImageUrl: post.proofImageUrl,
             likes: post.likes,
             commentsCount: post._count.comments,
             date: post.date.toISOString(),

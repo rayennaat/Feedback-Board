@@ -8,11 +8,20 @@ export default function HomePage() {
           <Link href="/" className="text-lg font-semibold tracking-tight text-slate-950">
             Feedback TN
           </Link>
-          <nav className="flex items-center gap-3">
-            <Link href="/login" className="rounded-md px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950">
+          <nav className="flex items-center gap-2 sm:gap-3">
+            <Link href="/about" className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950 sm:inline-block">
+              About
+            </Link>
+            <Link href="/rules" className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950 sm:inline-block">
+              Rules
+            </Link>
+            <Link href="/contact" className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950 sm:inline-block">
+              Contact
+            </Link>
+            <Link href="/login" className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950 sm:px-4">
               Log in
             </Link>
-            <Link href="/signup" className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            <Link href="/signup" className="rounded-md bg-slate-950 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 sm:px-4">
               Sign up
             </Link>
           </nav>

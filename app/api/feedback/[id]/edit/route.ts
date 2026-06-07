@@ -10,6 +10,10 @@ interface JwtPayload {
 }
 
 const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+const sanitizeProofImageUrl = (value: unknown) => {
+  const proofImageUrl = trimValue(value)
+  return proofImageUrl.startsWith('/uploads/proofs/') ? proofImageUrl : ''
+}
 
 export async function PATCH(req: NextRequest) {
   const token = req.cookies.get('authToken')?.value
@@ -44,6 +48,7 @@ export async function PATCH(req: NextRequest) {
   const city = trimValue(body.city)
   const experienceType = trimValue(body.experienceType)
   const isAnonymous = Boolean(body.isAnonymous)
+  const proofImageUrl = sanitizeProofImageUrl(body.proofImageUrl)
 
   if (!title || !message || !category || !subject || !city || !experienceType) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
@@ -73,7 +78,7 @@ export async function PATCH(req: NextRequest) {
 
   const updated = await prisma.feedback.update({
     where: { id: feedbackId },
-    data: { title, message, category, subject, city, experienceType, isAnonymous },
+    data: { title, message, category, subject, city, experienceType, isAnonymous, proofImageUrl },
     include: {
       user: {
         select: { username: true }
@@ -93,6 +98,7 @@ export async function PATCH(req: NextRequest) {
     city: updated.city,
     experienceType: updated.experienceType,
     isAnonymous: updated.isAnonymous,
+    proofImageUrl: updated.proofImageUrl,
     likes: updated.likes,
     date: updated.date.toISOString(),
     user: updated.isAnonymous ? 'Anonymous' : updated.user.username,

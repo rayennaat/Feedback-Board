@@ -1,6 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { Bell, Bookmark, BookmarkCheck, UserCircle } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
@@ -23,6 +25,7 @@ interface ExperienceFormState {
   city: string
   experienceType: string
   isAnonymous: boolean
+  proofImageUrl: string
 }
 
 interface FeedbackItem extends ExperienceFormState {
@@ -46,6 +49,7 @@ interface ApiFeedbackItem {
   city?: string
   experienceType?: string
   isAnonymous?: boolean
+  proofImageUrl?: string
   date: string
   user: string
   likes: number
@@ -58,6 +62,7 @@ interface ApiFeedbackItem {
 
 interface CommentItem {
   id: number
+  parentId: number | null
   message: string
   date: string
   user: string
@@ -88,7 +93,8 @@ const emptyPost: ExperienceFormState = {
   subject: '',
   city: 'Tunis',
   experienceType: 'Question',
-  isAnonymous: false
+  isAnonymous: false,
+  proofImageUrl: ''
 }
 
 export default function FeedbackPage() {
@@ -114,11 +120,13 @@ export default function FeedbackPage() {
   const [commentsByPost, setCommentsByPost] = useState<Record<number, CommentItem[]>>({})
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({})
   const [anonymousCommentDrafts, setAnonymousCommentDrafts] = useState<Record<number, boolean>>({})
+  const [replyTargetsByPost, setReplyTargetsByPost] = useState<Record<number, CommentItem | null>>({})
   const [reportingTarget, setReportingTarget] = useState<{ type: 'feedback' | 'comment'; id: number } | null>(null)
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
   const [reportDetails, setReportDetails] = useState('')
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [showNotifications, setShowNotifications] = useState(false)
+  const [proofUploadTarget, setProofUploadTarget] = useState<'new' | 'edit' | null>(null)
 
   const activeUser = publicMode ? null : currentUser
 
@@ -130,6 +138,7 @@ export default function FeedbackPage() {
       city: item.city || 'Tunisia',
       experienceType: item.experienceType || 'Question',
       isAnonymous: Boolean(item.isAnonymous),
+      proofImageUrl: item.proofImageUrl || '',
       commentsCount: item.commentsCount || 0,
       status: item.status || 'approved',
       isLiked: Boolean(item.likedByCurrentUser),
@@ -256,6 +265,41 @@ export default function FeedbackPage() {
     }
   }
 
+  const handleProofImageUpload = async (
+    file: File | null,
+    target: 'new' | 'edit',
+    value: ExperienceFormState,
+    onChange: (next: ExperienceFormState) => void
+  ) => {
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+    setProofUploadTarget(target)
+
+    try {
+      const res = await fetch('/api/uploads/proof', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to upload proof image')
+        return
+      }
+
+      onChange({ ...value, proofImageUrl: data.url })
+      toast.success('Proof image uploaded')
+    } catch (err) {
+      console.error('Proof upload error:', err)
+      toast.error('Failed to upload proof image')
+    } finally {
+      setProofUploadTarget(null)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!requireAuth('Log in to share an experience.')) return
@@ -295,7 +339,8 @@ export default function FeedbackPage() {
       subject: item.subject,
       city: item.city,
       experienceType: item.experienceType,
-      isAnonymous: item.isAnonymous
+      isAnonymous: item.isAnonymous,
+      proofImageUrl: item.proofImageUrl
     })
   }
 
@@ -435,7 +480,7 @@ export default function FeedbackPage() {
     }
   }
 
-  const handleAddComment = async (postId: number) => {
+  const handleAddComment = async (postId: number, parentId?: number) => {
     if (!requireAuth('Log in to reply.')) return
     const message = commentDrafts[postId]?.trim()
     if (!message) return
@@ -444,7 +489,7 @@ export default function FeedbackPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ message, isAnonymous: Boolean(anonymousCommentDrafts[postId]) })
+      body: JSON.stringify({ message, isAnonymous: Boolean(anonymousCommentDrafts[postId]), parentId })
     })
     const data = await res.json()
 
@@ -457,11 +502,20 @@ export default function FeedbackPage() {
     setFeedback(prev => prev.map(item => item.id === postId ? { ...item, commentsCount: item.commentsCount + 1 } : item))
     setCommentDrafts(prev => ({ ...prev, [postId]: '' }))
     setAnonymousCommentDrafts(prev => ({ ...prev, [postId]: false }))
+    setReplyTargetsByPost(prev => ({ ...prev, [postId]: null }))
     toast.success('Comment added')
   }
 
   const handleDeleteComment = async (postId: number, commentId: number) => {
     if (!window.confirm('Delete this comment?')) return
+
+    const comments = commentsByPost[postId] || []
+    const idsToRemove = new Set<number>()
+    const collectBranch = (id: number) => {
+      idsToRemove.add(id)
+      comments.filter(comment => comment.parentId === id).forEach(comment => collectBranch(comment.id))
+    }
+    collectBranch(commentId)
 
     const res = await fetch(`/api/comments/${commentId}/delete`, {
       method: 'DELETE',
@@ -474,8 +528,9 @@ export default function FeedbackPage() {
       return
     }
 
-    setCommentsByPost(prev => ({ ...prev, [postId]: (prev[postId] || []).filter(comment => comment.id !== commentId) }))
-    setFeedback(prev => prev.map(item => item.id === postId ? { ...item, commentsCount: Math.max(0, item.commentsCount - 1) } : item))
+    setCommentsByPost(prev => ({ ...prev, [postId]: (prev[postId] || []).filter(comment => !idsToRemove.has(comment.id)) }))
+    setFeedback(prev => prev.map(item => item.id === postId ? { ...item, commentsCount: Math.max(0, item.commentsCount - idsToRemove.size) } : item))
+    setReplyTargetsByPost(prev => prev[postId] && idsToRemove.has(prev[postId].id) ? { ...prev, [postId]: null } : prev)
     toast.success('Comment deleted')
   }
 
@@ -578,6 +633,19 @@ export default function FeedbackPage() {
       <div>
         <label htmlFor="message" className="mb-1 block text-sm font-medium text-slate-700">Details</label>
         <textarea id="message" rows={5} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={value.message} onChange={(e) => onChange({ ...value, message: e.target.value })} placeholder="Share what happened, what you want to know, or what others should watch out for." required />
+      </div>
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+        <label className="mb-1 block text-sm font-medium text-slate-700">Proof image</label>
+        <p className="mb-3 text-xs leading-5 text-slate-500">Optional screenshot or photo. Blur private information before uploading. JPG, PNG, WebP, or GIF up to 5 MB.</p>
+        {value.proofImageUrl ? (
+          <div className="space-y-3">
+            <Image src={value.proofImageUrl} alt="Uploaded proof preview" width={900} height={520} className="max-h-56 w-full rounded-md border border-slate-200 bg-white object-contain" />
+            <button type="button" onClick={() => onChange({ ...value, proofImageUrl: '' })} className="rounded-md bg-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-300">Remove image</button>
+          </div>
+        ) : (
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={proofUploadTarget !== null} onChange={(e) => handleProofImageUpload(e.target.files?.[0] || null, value === newFeedback ? 'new' : 'edit', value, onChange)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700" />
+        )}
+        {proofUploadTarget !== null && <p className="mt-2 text-xs font-medium text-blue-700">Uploading image...</p>}
       </div>
       <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
         <input type="checkbox" checked={value.isAnonymous} onChange={(e) => onChange({ ...value, isAnonymous: e.target.checked })} className="h-4 w-4 rounded border-slate-300" />
@@ -700,6 +768,35 @@ export default function FeedbackPage() {
                 const isEditing = editingFeedbackId === item.id
                 const isCommentsOpen = openCommentsPostId === item.id
                 const comments = commentsByPost[item.id] || []
+                const replyTarget = replyTargetsByPost[item.id] || null
+                const topLevelComments = comments.filter(comment => comment.parentId === null)
+                const repliesByParent = comments.reduce<Record<number, CommentItem[]>>((acc, comment) => {
+                  if (comment.parentId === null) return acc
+                  acc[comment.parentId] = [...(acc[comment.parentId] || []), comment]
+                  return acc
+                }, {})
+                const renderComment = (comment: CommentItem, depth = 0): ReactNode => {
+                  const childReplies = repliesByParent[comment.id] || []
+
+                  return (
+                    <div key={comment.id} className={depth > 0 ? 'ml-4 border-l border-slate-200 pl-4 sm:ml-6' : ''}>
+                      <div className="rounded-md bg-white p-3 shadow-sm">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm text-slate-700">{comment.message}</p>
+                            <p className="mt-1 text-xs text-slate-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
+                          </div>
+                          <div className="flex gap-2 text-xs font-medium">
+                            <button onClick={() => setReplyTargetsByPost(prev => ({ ...prev, [item.id]: comment }))} className="text-blue-600 hover:text-blue-800">Reply</button>
+                            <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-slate-500 hover:text-slate-950">Report</button>
+                            {comment.isCurrentUser && <button onClick={() => handleDeleteComment(item.id, comment.id)} className="text-red-600 hover:text-red-800">Delete</button>}
+                          </div>
+                        </div>
+                      </div>
+                      {childReplies.length > 0 && <div className="mt-3 space-y-3">{childReplies.map(reply => renderComment(reply, depth + 1))}</div>}
+                    </div>
+                  )
+                }
 
                 return (
                   <li key={item.id} className="p-5 transition-colors hover:bg-slate-50">
@@ -724,6 +821,7 @@ export default function FeedbackPage() {
                             <Link href={`/post/${item.id}`} className="mt-3 block text-lg font-semibold text-slate-950 hover:text-blue-700">{item.title}</Link>
                             <p className="mt-1 text-sm font-medium text-slate-500">About <Link href={`/company/${slugify(item.subject)}`} className="text-blue-700 hover:text-blue-800">{item.subject}</Link></p>
                             <p className="mt-2 text-slate-600">{item.message}</p>
+                            {item.proofImageUrl && <Image src={item.proofImageUrl} alt="Proof attached to this post" width={900} height={520} className="mt-3 max-h-72 w-full rounded-md border border-slate-200 bg-white object-contain" />}
                           </div>
                           {item.status === 'approved' && (
                             <button onClick={() => handleLike(item.id)} className={`flex items-center gap-1 self-start transition-all duration-200 ${item.isLiked ? 'scale-110 text-blue-600' : 'text-slate-500 hover:text-blue-500'}`}>
@@ -753,30 +851,23 @@ export default function FeedbackPage() {
                             <div className="space-y-3">
                               {comments.length === 0 ? (
                                 <p className="text-sm text-slate-500">No replies yet.</p>
-                              ) : comments.map(comment => (
-                                <div key={comment.id} className="rounded-md bg-white p-3 shadow-sm">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                      <p className="text-sm text-slate-700">{comment.message}</p>
-                                      <p className="mt-1 text-xs text-slate-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
-                                    </div>
-                                    <div className="flex gap-2 text-xs font-medium">
-                                      <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-slate-500 hover:text-slate-950">Report</button>
-                                      {comment.isCurrentUser && <button onClick={() => handleDeleteComment(item.id, comment.id)} className="text-red-600 hover:text-red-800">Delete</button>}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                              ) : topLevelComments.map(comment => renderComment(comment))}
                             </div>
                             <div className="mt-4 space-y-2">
-                              <textarea value={commentDrafts[item.id] || ''} onChange={(e) => setCommentDrafts(prev => ({ ...prev, [item.id]: e.target.value }))} rows={3} placeholder="Reply with your experience or advice..." className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                              {replyTarget && (
+                                <div className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                                  <span>Replying to {replyTarget.user}</span>
+                                  <button onClick={() => setReplyTargetsByPost(prev => ({ ...prev, [item.id]: null }))} className="font-semibold hover:text-blue-700">Cancel</button>
+                                </div>
+                              )}
+                              <textarea value={commentDrafts[item.id] || ''} onChange={(e) => setCommentDrafts(prev => ({ ...prev, [item.id]: e.target.value }))} rows={3} placeholder={replyTarget ? `Reply to ${replyTarget.user}...` : 'Reply with your experience or advice...'} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <label className="flex items-center gap-2 text-sm text-slate-600">
                                   <input type="checkbox" checked={Boolean(anonymousCommentDrafts[item.id])} onChange={(e) => setAnonymousCommentDrafts(prev => ({ ...prev, [item.id]: e.target.checked }))} />
                                   Reply anonymously
                                 </label>
                                 {activeUser ? (
-                                  <button onClick={() => handleAddComment(item.id)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Add Reply</button>
+                                  <button onClick={() => handleAddComment(item.id, replyTarget?.id)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">{replyTarget ? 'Reply' : 'Add Reply'}</button>
                                 ) : (
                                   <Link href="/login" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Log in to reply</Link>
                                 )}

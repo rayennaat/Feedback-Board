@@ -18,6 +18,7 @@ interface Post {
   city: string
   experienceType: string
   isAnonymous: boolean
+  proofImageUrl: string
   likes: number
   commentsCount: number
   reportsCount: number
@@ -321,6 +322,7 @@ export default function DashboardPage() {
       <td className="px-5 py-4">
         <div className="text-sm font-semibold text-slate-950">{post.title}</div>
         <div className="mt-1 max-w-sm text-sm text-slate-500 line-clamp-2">{post.message}</div>
+        {post.proofImageUrl && <a href={post.proofImageUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-800">View proof image</a>}
         <div className="mt-2 text-xs font-medium text-slate-500">{post.experienceType} / {post.city}</div>
       </td>
       <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{post.subject}</td>

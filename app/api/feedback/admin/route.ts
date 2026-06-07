@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
       city: item.city,
       experienceType: item.experienceType,
       isAnonymous: item.isAnonymous,
+      proofImageUrl: item.proofImageUrl,
       likes: item.likes,
       commentsCount: item._count.comments,
       reportsCount: item._count.reports,

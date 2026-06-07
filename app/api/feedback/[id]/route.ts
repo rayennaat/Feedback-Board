@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
     city: feedback.city,
     experienceType: feedback.experienceType,
     isAnonymous: feedback.isAnonymous,
+    proofImageUrl: feedback.proofImageUrl,
     likes: feedback.likes,
     commentsCount: feedback._count.comments,
     date: feedback.date.toISOString(),

@@ -1,17 +1,39 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Bell, Bookmark, BookmarkCheck, UserCircle } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
+import { EXPERIENCE_TYPES, SUPPORTED_LANGUAGE_LABELS, TUNISIA_CATEGORIES, TUNISIA_CITIES } from '@/lib/tunisia-context'
+import { slugify } from '@/lib/slug'
 
-interface FeedbackItem {
-  id: number
+const REPORT_REASONS = [
+  'False or misleading claim',
+  'Harassment or insult',
+  'Private information',
+  'Spam',
+  'Other'
+]
+
+interface ExperienceFormState {
   title: string
   message: string
+  category: string
+  subject: string
+  city: string
+  experienceType: string
+  isAnonymous: boolean
+}
+
+interface FeedbackItem extends ExperienceFormState {
+  id: number
   date: string
   user: string
   likes: number
+  commentsCount: number
   status: 'pending' | 'approved' | 'rejected'
   isLiked: boolean
+  isSaved: boolean
   isCurrentUser?: boolean
 }
 
@@ -19,82 +41,206 @@ interface ApiFeedbackItem {
   id: number
   title: string
   message: string
+  category?: string
+  subject?: string
+  city?: string
+  experienceType?: string
+  isAnonymous?: boolean
   date: string
   user: string
   likes: number
+  commentsCount?: number
   status?: 'pending' | 'approved' | 'rejected'
   isCurrentUser?: boolean
   likedByCurrentUser?: boolean
+  savedByCurrentUser?: boolean
+}
+
+interface CommentItem {
+  id: number
+  message: string
+  date: string
+  user: string
+  isAnonymous: boolean
+  isCurrentUser?: boolean
+}
+
+interface CurrentUser {
+  id: number
+  username: string
+  email: string
+  isAdmin: boolean
+  isSuspended?: boolean
+}
+
+interface NotificationItem {
+  id: number
+  message: string
+  link: string
+  isRead: boolean
+  date: string
+}
+
+const emptyPost: ExperienceFormState = {
+  title: '',
+  message: '',
+  category: 'General Question',
+  subject: '',
+  city: 'Tunis',
+  experienceType: 'Question',
+  isAnonymous: false
 }
 
 export default function FeedbackPage() {
-  const FEEDBACK_PER_PAGE = 10
+  const POSTS_PER_PAGE = 10
   const [feedback, setFeedback] = useState<FeedbackItem[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [viewMode, setViewMode] = useState<'all' | 'mine'>('all')
-  const [sortBy, setSortBy] = useState<'latest' | 'most-liked'>('latest')
+  const [viewMode, setViewMode] = useState<'all' | 'mine' | 'saved'>('all')
+  const [sortBy, setSortBy] = useState<'latest' | 'most-liked' | 'most-discussed'>('latest')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [cityFilter, setCityFilter] = useState('all')
+  const [subjectQuery, setSubjectQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
-  const [newFeedback, setNewFeedback] = useState({
-    title: '',
-    message: ''
-  })
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [publicMode] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('public') === '1')
+  const [newFeedback, setNewFeedback] = useState<ExperienceFormState>(emptyPost)
   const [editingFeedbackId, setEditingFeedbackId] = useState<number | null>(null)
-  const [editFeedback, setEditFeedback] = useState({
-    title: '',
-    message: ''
-  })
+  const [editFeedback, setEditFeedback] = useState<ExperienceFormState>(emptyPost)
   const [showFeedbackForm, setShowFeedbackForm] = useState(false)
+  const [openCommentsPostId, setOpenCommentsPostId] = useState<number | null>(null)
+  const [commentsByPost, setCommentsByPost] = useState<Record<number, CommentItem[]>>({})
+  const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({})
+  const [anonymousCommentDrafts, setAnonymousCommentDrafts] = useState<Record<number, boolean>>({})
+  const [reportingTarget, setReportingTarget] = useState<{ type: 'feedback' | 'comment'; id: number } | null>(null)
+  const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
+  const [reportDetails, setReportDetails] = useState('')
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [showNotifications, setShowNotifications] = useState(false)
 
-  const formatFeedback = (items: ApiFeedbackItem[]): FeedbackItem[] =>
+  const activeUser = publicMode ? null : currentUser
+
+  const formatFeedback = useCallback((items: ApiFeedbackItem[]): FeedbackItem[] =>
     items.map(item => ({
       ...item,
+      category: item.category || 'General Question',
+      subject: item.subject || 'General',
+      city: item.city || 'Tunisia',
+      experienceType: item.experienceType || 'Question',
+      isAnonymous: Boolean(item.isAnonymous),
+      commentsCount: item.commentsCount || 0,
       status: item.status || 'approved',
-      isLiked: Boolean(item.likedByCurrentUser)
-    }))
+      isLiked: Boolean(item.likedByCurrentUser),
+      isSaved: Boolean(item.savedByCurrentUser)
+    })), [])
 
-  const fetchFeedback = useCallback(async (mode: 'all' | 'mine') => {
-    setLoading(true)
+  const fetchFeedback = useCallback(async (mode: 'all' | 'mine' | 'saved', options?: { silent?: boolean }) => {
+    if (!options?.silent) setLoading(true)
     setErrorMessage('')
 
     try {
-      const res = await fetch(mode === 'mine' ? '/api/feedback/mine' : '/api/feedback', {
+      const endpoint = mode === 'mine' ? '/api/feedback/mine' : mode === 'saved' ? '/api/feedback/saved' : '/api/feedback'
+      const res = await fetch(endpoint, {
         method: 'GET',
         credentials: 'include'
       })
 
       if (!res.ok) {
         const data = await res.json()
-        const message = data.error || 'Could not load feedback.'
-        setErrorMessage(message)
-        toast.error(message)
-        setFeedback([])
+        const message = data.error || 'Could not load posts.'
+        if (!options?.silent) {
+          setErrorMessage(message)
+          toast.error(message)
+          setFeedback([])
+        }
         return
       }
 
       const data: ApiFeedbackItem[] = await res.json()
       setFeedback(formatFeedback(data))
     } catch (err) {
-      console.error('Error loading feedback:', err)
-      const message = 'Could not load feedback. Please try again.'
-      setErrorMessage(message)
-      toast.error(message)
-      setFeedback([])
+      console.error('Error loading posts:', err)
+      const message = 'Could not load posts. Please try again.'
+      if (!options?.silent) {
+        setErrorMessage(message)
+        toast.error(message)
+        setFeedback([])
+      }
     } finally {
-      setLoading(false)
+      if (!options?.silent) setLoading(false)
     }
-  }, [])
+  }, [formatFeedback])
 
   useEffect(() => {
     fetchFeedback('all')
   }, [fetchFeedback])
 
   useEffect(() => {
+    if (publicMode) return
+
+    const fetchCurrentUser = async () => {
+      const res = await fetch('/api/me', { credentials: 'include' })
+      const data = await res.json()
+      setCurrentUser(data.user)
+    }
+
+    fetchCurrentUser()
+  }, [publicMode])
+
+  const fetchNotifications = useCallback(async () => {
+    if (!activeUser) {
+      setNotifications([])
+      return
+    }
+
+    const res = await fetch('/api/notifications', { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json()
+      setNotifications(data.notifications || [])
+    }
+  }, [activeUser])
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [fetchNotifications])
+
+  useEffect(() => {
+    if (!activeUser) return
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') fetchNotifications()
+    }, 4000)
+
+    return () => window.clearInterval(interval)
+  }, [activeUser, fetchNotifications])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && editingFeedbackId === null) {
+        fetchFeedback(viewMode, { silent: true })
+      }
+    }, 5000)
+
+    return () => window.clearInterval(interval)
+  }, [editingFeedbackId, fetchFeedback, viewMode])
+
+
+  useEffect(() => {
     setCurrentPage(1)
     setEditingFeedbackId(null)
-  }, [viewMode, sortBy])
+  }, [viewMode, sortBy, categoryFilter, typeFilter, cityFilter, subjectQuery, searchQuery])
 
-  const handleViewChange = (mode: 'all' | 'mine') => {
+  const requireAuth = (message: string) => {
+    if (activeUser) return true
+    toast.error(message)
+    return false
+  }
+
+  const handleViewChange = (mode: 'all' | 'mine' | 'saved') => {
+    if (mode === 'mine' && !requireAuth('Log in to see your posts.')) return
+    if (mode === 'saved' && !requireAuth('Log in to see saved posts.')) return
     setViewMode(mode)
     fetchFeedback(mode)
   }
@@ -112,69 +258,59 @@ export default function FeedbackPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newFeedback.title || !newFeedback.message) return
+    if (!requireAuth('Log in to share an experience.')) return
+    if (!newFeedback.title || !newFeedback.message || !newFeedback.subject) return
 
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(newFeedback)
       })
 
       if (!res.ok) {
         const errorData = await res.json()
-        toast.error(errorData.error || 'Failed to submit feedback')
+        toast.error(errorData.error || 'Failed to submit post')
         return
       }
 
-      toast.success('Feedback submitted for admin approval!', {
-        duration: 4000,
-        style: {
-          background: '#4BB543',
-          color: '#fff'
-        }
-      })
-
-      setNewFeedback({ title: '', message: '' })
+      toast.success('Post submitted for admin approval!')
+      setNewFeedback(emptyPost)
       setShowFeedbackForm(false)
 
-      if (viewMode === 'mine') {
-        fetchFeedback('mine')
-      }
+      if (viewMode === 'mine') fetchFeedback('mine')
     } catch (err) {
-      toast.error('Failed to submit feedback. Please try again.', {
-        duration: 4000,
-        style: {
-          background: '#FF3333',
-          color: '#fff'
-        }
-      })
       console.error(err)
+      toast.error('Failed to submit post. Please try again.')
     }
   }
 
   const handleStartEdit = (item: FeedbackItem) => {
     setEditingFeedbackId(item.id)
-    setEditFeedback({ title: item.title, message: item.message })
+    setEditFeedback({
+      title: item.title,
+      message: item.message,
+      category: item.category,
+      subject: item.subject,
+      city: item.city,
+      experienceType: item.experienceType,
+      isAnonymous: item.isAnonymous
+    })
   }
 
   const handleCancelEdit = () => {
     setEditingFeedbackId(null)
-    setEditFeedback({ title: '', message: '' })
+    setEditFeedback(emptyPost)
   }
 
   const handleUpdateFeedback = async (id: number) => {
-    if (!editFeedback.title || !editFeedback.message) return
+    if (!editFeedback.title || !editFeedback.message || !editFeedback.subject) return
 
     try {
       const res = await fetch(`/api/feedback/${id}/edit`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(editFeedback)
       })
@@ -182,23 +318,21 @@ export default function FeedbackPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        toast.error(data.error || 'Failed to update feedback')
+        toast.error(data.error || 'Failed to update post')
         return
       }
 
-      toast.success('Feedback updated')
+      toast.success('Post updated')
       setEditingFeedbackId(null)
-      setFeedback(prev =>
-        prev.map(item => (item.id === id ? { ...item, ...formatFeedback([data])[0] } : item))
-      )
+      setFeedback(prev => prev.map(item => (item.id === id ? { ...item, ...formatFeedback([data])[0] } : item)))
     } catch (err) {
-      console.error('Update feedback error:', err)
-      toast.error('Failed to update feedback')
+      console.error('Update post error:', err)
+      toast.error('Failed to update post')
     }
   }
 
   const handleDeleteFeedback = async (id: number) => {
-    if (!window.confirm('Delete this pending feedback?')) return
+    if (!window.confirm('Delete this pending post?')) return
 
     try {
       const res = await fetch(`/api/feedback/${id}/delete`, {
@@ -209,30 +343,50 @@ export default function FeedbackPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        toast.error(data.error || 'Failed to delete feedback')
+        toast.error(data.error || 'Failed to delete post')
         return
       }
 
-      toast.success('Feedback deleted')
+      toast.success('Post deleted')
       setFeedback(prev => prev.filter(item => item.id !== id))
     } catch (err) {
-      console.error('Delete feedback error:', err)
-      toast.error('Failed to delete feedback')
+      console.error('Delete post error:', err)
+      toast.error('Failed to delete post')
+    }
+  }
+
+  const handleSave = async (id: number) => {
+    if (!requireAuth('Log in to save posts.')) return
+
+    setFeedback(prev => prev.map(item => item.id === id ? { ...item, isSaved: !item.isSaved } : item))
+
+    try {
+      const res = await fetch(`/api/feedback/${id}/save`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save post')
+      setFeedback(prev => prev.map(item => item.id === id ? { ...item, isSaved: Boolean(data.saved) } : item))
+      if (viewMode === 'saved' && !data.saved) setFeedback(prev => prev.filter(item => item.id !== id))
+    } catch (error) {
+      console.error('Error toggling save:', error)
+      setFeedback(prev => prev.map(item => item.id === id ? { ...item, isSaved: !item.isSaved } : item))
+      toast.error('Something went wrong.')
+    }
+  }
+
+  const openNotifications = async () => {
+    setShowNotifications(prev => !prev)
+    if (notifications.some(item => !item.isRead)) {
+      setNotifications(prev => prev.map(item => ({ ...item, isRead: true })))
+      await fetch('/api/notifications/read', { method: 'PATCH', credentials: 'include' })
     }
   }
 
   const handleLike = async (id: number) => {
-    setFeedback(prev =>
-      prev.map(item =>
-        item.id === id
-          ? {
-              ...item,
-              likes: item.isLiked ? item.likes - 1 : item.likes + 1,
-              isLiked: !item.isLiked
-            }
-          : item
-      )
-    )
+    if (!requireAuth('Log in to like posts.')) return
+    setFeedback(prev => prev.map(item => item.id === id ? { ...item, likes: item.isLiked ? item.likes - 1 : item.likes + 1, isLiked: !item.isLiked } : item))
 
     try {
       const res = await fetch(`/api/feedback/${id}/like`, {
@@ -241,40 +395,147 @@ export default function FeedbackPage() {
       })
 
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to toggle like')
-      }
+      if (!res.ok) throw new Error(data.error || 'Failed to toggle like')
     } catch (error) {
       console.error('Error toggling like:', error)
-      setFeedback(prev =>
-        prev.map(item =>
-          item.id === id
-            ? {
-                ...item,
-                likes: item.isLiked ? item.likes - 1 : item.likes + 1,
-                isLiked: !item.isLiked
-              }
-            : item
-        )
-      )
+      setFeedback(prev => prev.map(item => item.id === id ? { ...item, likes: item.isLiked ? item.likes - 1 : item.likes + 1, isLiked: !item.isLiked } : item))
       toast.error('Something went wrong.')
     }
   }
 
-  const sortedFeedback = [...feedback].sort((a, b) => {
-    if (sortBy === 'latest') {
-      return new Date(b.date).getTime() - new Date(a.date).getTime()
+  const fetchComments = useCallback(async (postId: number, options?: { silent?: boolean }) => {
+    const res = await fetch(`/api/feedback/${postId}/comments`, { credentials: 'include' })
+    const data = await res.json()
+
+    if (!res.ok) {
+      if (!options?.silent) toast.error(data.error || 'Failed to load comments')
+      return
     }
 
+    setCommentsByPost(prev => ({ ...prev, [postId]: data }))
+    setFeedback(prev => prev.map(item => item.id === postId ? { ...item, commentsCount: data.length } : item))
+  }, [])
+
+  useEffect(() => {
+    if (!openCommentsPostId) return
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') fetchComments(openCommentsPostId, { silent: true })
+    }, 5000)
+
+    return () => window.clearInterval(interval)
+  }, [fetchComments, openCommentsPostId])
+
+  const toggleComments = async (postId: number) => {
+    const isOpening = openCommentsPostId !== postId
+    setOpenCommentsPostId(isOpening ? postId : null)
+
+    if (isOpening && !commentsByPost[postId]) {
+      await fetchComments(postId)
+    }
+  }
+
+  const handleAddComment = async (postId: number) => {
+    if (!requireAuth('Log in to reply.')) return
+    const message = commentDrafts[postId]?.trim()
+    if (!message) return
+
+    const res = await fetch(`/api/feedback/${postId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ message, isAnonymous: Boolean(anonymousCommentDrafts[postId]) })
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      toast.error(data.error || 'Failed to add comment')
+      return
+    }
+
+    setCommentsByPost(prev => ({ ...prev, [postId]: [...(prev[postId] || []), data] }))
+    setFeedback(prev => prev.map(item => item.id === postId ? { ...item, commentsCount: item.commentsCount + 1 } : item))
+    setCommentDrafts(prev => ({ ...prev, [postId]: '' }))
+    setAnonymousCommentDrafts(prev => ({ ...prev, [postId]: false }))
+    toast.success('Comment added')
+  }
+
+  const handleDeleteComment = async (postId: number, commentId: number) => {
+    if (!window.confirm('Delete this comment?')) return
+
+    const res = await fetch(`/api/comments/${commentId}/delete`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      toast.error(data.error || 'Failed to delete comment')
+      return
+    }
+
+    setCommentsByPost(prev => ({ ...prev, [postId]: (prev[postId] || []).filter(comment => comment.id !== commentId) }))
+    setFeedback(prev => prev.map(item => item.id === postId ? { ...item, commentsCount: Math.max(0, item.commentsCount - 1) } : item))
+    toast.success('Comment deleted')
+  }
+
+  const openReport = (target: { type: 'feedback' | 'comment'; id: number }) => {
+    if (!requireAuth('Log in to report content.')) return
+    setReportingTarget(target)
+    setReportReason(REPORT_REASONS[0])
+    setReportDetails('')
+  }
+
+  const handleSubmitReport = async () => {
+    if (!reportingTarget) return
+
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        targetType: reportingTarget.type,
+        targetId: reportingTarget.id,
+        reason: reportReason,
+        details: reportDetails
+      })
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      toast.error(data.error || 'Failed to submit report')
+      return
+    }
+
+    setReportingTarget(null)
+    toast.success('Report submitted for moderation')
+  }
+
+  const filteredFeedback = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    const subject = subjectQuery.trim().toLowerCase()
+
+    return feedback
+      .filter(item => categoryFilter === 'all' || item.category === categoryFilter)
+      .filter(item => typeFilter === 'all' || item.experienceType === typeFilter)
+      .filter(item => cityFilter === 'all' || item.city === cityFilter)
+      .filter(item => !subject || item.subject.toLowerCase().includes(subject))
+      .filter(item => {
+        if (!query) return true
+        const combined = [item.title, item.message, item.subject, item.city, item.category, item.experienceType, item.user].join(' ').toLowerCase()
+        return query.split(/\s+/).every(term => combined.includes(term))
+      })
+  }, [feedback, categoryFilter, typeFilter, cityFilter, subjectQuery, searchQuery])
+
+  const sortedFeedback = [...filteredFeedback].sort((a, b) => {
+    if (sortBy === 'latest') return new Date(b.date).getTime() - new Date(a.date).getTime()
+    if (sortBy === 'most-discussed') return b.commentsCount - a.commentsCount
     return b.likes - a.likes
   })
 
-  const totalPages = Math.ceil(sortedFeedback.length / FEEDBACK_PER_PAGE)
-  const paginatedFeedback = sortedFeedback.slice(
-    (currentPage - 1) * FEEDBACK_PER_PAGE,
-    currentPage * FEEDBACK_PER_PAGE
-  )
+  const unreadCount = notifications.filter(item => !item.isRead).length
+  const totalPages = Math.ceil(sortedFeedback.length / POSTS_PER_PAGE)
+  const paginatedFeedback = sortedFeedback.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE)
 
   const getStatusClass = (status: FeedbackItem['status']) => {
     if (status === 'approved') return 'bg-green-100 text-green-800'
@@ -282,162 +543,172 @@ export default function FeedbackPage() {
     return 'bg-red-100 text-red-800'
   }
 
+  const renderPostFields = (value: ExperienceFormState, onChange: (next: ExperienceFormState) => void) => (
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label htmlFor="category" className="mb-1 block text-sm font-medium text-slate-700">Category</label>
+          <select id="category" value={value.category} onChange={(e) => onChange({ ...value, category: e.target.value })} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            {TUNISIA_CATEGORIES.map(category => <option key={category}>{category}</option>)}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="experienceType" className="mb-1 block text-sm font-medium text-slate-700">Type</label>
+          <select id="experienceType" value={value.experienceType} onChange={(e) => onChange({ ...value, experienceType: e.target.value })} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            {EXPERIENCE_TYPES.map(type => <option key={type}>{type}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label htmlFor="city" className="mb-1 block text-sm font-medium text-slate-700">City</label>
+          <select id="city" value={value.city} onChange={(e) => onChange({ ...value, city: e.target.value })} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            {TUNISIA_CITIES.map(city => <option key={city}>{city}</option>)}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="subject" className="mb-1 block text-sm font-medium text-slate-700">Company, shop, service, or topic</label>
+          <input type="text" id="subject" className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={value.subject} onChange={(e) => onChange({ ...value, subject: e.target.value })} placeholder="Example: Teleperformance, Jumia, delivery company" required />
+        </div>
+      </div>
+      <div>
+        <label htmlFor="title" className="mb-1 block text-sm font-medium text-slate-700">Title</label>
+        <input type="text" id="title" className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} placeholder="Example: Is this call center good for students?" required />
+      </div>
+      <div>
+        <label htmlFor="message" className="mb-1 block text-sm font-medium text-slate-700">Details</label>
+        <textarea id="message" rows={5} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={value.message} onChange={(e) => onChange({ ...value, message: e.target.value })} placeholder="Share what happened, what you want to know, or what others should watch out for." required />
+      </div>
+      <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+        <input type="checkbox" checked={value.isAnonymous} onChange={(e) => onChange({ ...value, isAnonymous: e.target.checked })} className="h-4 w-4 rounded border-slate-300" />
+        Post anonymously
+      </label>
+    </>
+  )
+
   return (
     <div className="min-h-screen bg-slate-50 py-6 px-4 text-slate-950 sm:px-6 lg:px-8">
       <Toaster position="top-right" />
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:flex sm:items-start sm:justify-between sm:gap-6">
           <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Feedback Board</h1>
-            <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
-              Share your thoughts and see what others are saying
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Feedback TN</h1>
+            <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">Share reviews, warnings, questions, and recommendations from real experiences in Tunisia.</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="mt-4 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100 sm:mt-0"
-          >
-            Logout
-          </button>
+          {activeUser ? (
+            <div className="mt-4 flex items-center justify-center gap-2 sm:mt-0">
+              <div className="relative">
+                <button onClick={openNotifications} title="Notifications" className="relative rounded-md border border-slate-300 bg-white p-2 text-slate-700 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-950">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{unreadCount}</span>}
+                </button>
+                {showNotifications && (
+                  <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-xl">
+                    <h3 className="text-sm font-semibold text-slate-950">Notifications</h3>
+                    <div className="mt-2 max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="py-3 text-sm text-slate-500">No notifications yet.</p>
+                      ) : notifications.map(notification => (
+                        <Link key={notification.id} href={notification.link} className="block rounded-md px-2 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                          <span className="block font-medium text-slate-900">{notification.message}</span>
+                          <span className="text-xs text-slate-500">{new Date(notification.date).toLocaleDateString()}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <Link href={`/user/${slugify(activeUser.username)}`} title="Profile" className="rounded-md border border-slate-300 bg-white p-2 text-slate-700 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-950">
+                <UserCircle className="h-5 w-5" />
+              </Link>
+              <button onClick={handleLogout} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100">Logout</button>
+            </div>
+          ) : (
+            <div className="mt-4 flex justify-center gap-2 sm:mt-0">
+              <Link href="/login" className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100">Log in</Link>
+              <Link href="/signup" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">Sign up</Link>
+            </div>
+          )}
         </div>
 
         <div className="mb-6 flex justify-end">
-          <button
-            onClick={() => setShowFeedbackForm(!showFeedbackForm)}
-            className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-          >
-            {showFeedbackForm ? 'Cancel' : 'Write Feedback'}
-          </button>
+          {activeUser ? (
+            <button onClick={() => setShowFeedbackForm(!showFeedbackForm)} className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">{showFeedbackForm ? 'Cancel' : 'Share Experience'}</button>
+          ) : (
+            <Link href="/login" className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">Log in to share</Link>
+          )}
         </div>
 
         {showFeedbackForm && (
           <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm animate-fade-in">
-            <h2 className="mb-4 text-xl font-semibold text-slate-950">Submit Feedback</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-600 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  value={newFeedback.title}
-                  onChange={(e) => setNewFeedback({ ...newFeedback, title: e.target.value })}
-                  placeholder="Brief description of your feedback"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  rows={4}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-600 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  value={newFeedback.message}
-                  onChange={(e) => setNewFeedback({ ...newFeedback, message: e.target.value })}
-                  placeholder="Detailed feedback or suggestions"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Submit Feedback
-              </button>
+            <h2 className="mb-2 text-xl font-semibold text-slate-950">Create a Post</h2>
+            <p className="mb-4 text-sm text-slate-600">Share your experience in {SUPPORTED_LANGUAGE_LABELS.join(', ')}.</p>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {renderPostFields(newFeedback, setNewFeedback)}
+              <button type="submit" className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit for Review</button>
             </form>
           </div>
         )}
 
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid gap-3 lg:grid-cols-[1.2fr_0.9fr_auto_auto_auto_auto]">
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search: Teleperformance Sousse, Jumia delivery..." className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            <input type="text" value={subjectQuery} onChange={(e) => setSubjectQuery(e.target.value)} placeholder="Company/service" className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+              <option value="all">All cities</option>
+              {TUNISIA_CITIES.map(city => <option key={city}>{city}</option>)}
+            </select>
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+              <option value="all">All categories</option>
+              {TUNISIA_CATEGORIES.map(category => <option key={category}>{category}</option>)}
+            </select>
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+              <option value="all">All types</option>
+              {EXPERIENCE_TYPES.map(type => <option key={type}>{type}</option>)}
+            </select>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+              <option value="latest">Latest</option>
+              <option value="most-liked">Most liked</option>
+              <option value="most-discussed">Most discussed</option>
+            </select>
+          </div>
+        </div>
+
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 bg-slate-50/70 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
-            <h2 className="text-lg font-semibold text-slate-950">
-              {viewMode === 'mine' ? 'My Feedback' : 'All Feedback'}
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-950">{viewMode === 'mine' ? 'My Posts' : viewMode === 'saved' ? 'Saved Posts' : 'Latest Experiences'}</h2>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleViewChange('all')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'all' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                All Feedback
-              </button>
-              <button
-                onClick={() => handleViewChange('mine')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'mine' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                My Feedback
-              </button>
-              <button
-                onClick={() => setSortBy('latest')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium ${sortBy === 'latest' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                Latest
-              </button>
-              <button
-                onClick={() => setSortBy('most-liked')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium ${sortBy === 'most-liked' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                Most Liked
-              </button>
+              <button onClick={() => handleViewChange('all')} className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'all' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>Latest Experiences</button>
+              <button onClick={() => handleViewChange('mine')} className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'mine' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>My Posts</button>
+              <button onClick={() => handleViewChange('saved')} className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'saved' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>Saved Posts</button>
             </div>
           </div>
 
           {loading ? (
-            <div className="p-6 text-center text-slate-500">Loading feedback...</div>
+            <div className="p-6 text-center text-slate-500">Loading posts...</div>
           ) : errorMessage ? (
             <div className="p-6 text-center">
-              <p className="font-medium text-red-600">Could not load feedback</p>
+              <p className="font-medium text-red-600">Could not load posts</p>
               <p className="mt-1 text-sm text-slate-600">{errorMessage}</p>
-              <button
-                onClick={() => fetchFeedback(viewMode)}
-                className="mt-4 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              >
-                Try Again
-              </button>
+              <button onClick={() => fetchFeedback(viewMode)} className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">Try Again</button>
             </div>
           ) : sortedFeedback.length === 0 ? (
-            <div className="p-6 text-center text-slate-500">
-              {viewMode === 'mine'
-                ? 'You have not submitted any feedback yet.'
-                : 'No feedback submitted yet. Be the first to share your thoughts!'}
-            </div>
+            <div className="p-6 text-center text-slate-500">{viewMode === 'mine' ? 'You have not shared any posts yet.' : viewMode === 'saved' ? 'No saved posts yet.' : 'No posts match these filters yet.'}</div>
           ) : (
             <ul className="divide-y divide-slate-200">
               {paginatedFeedback.map((item) => {
                 const isEditing = editingFeedbackId === item.id
+                const isCommentsOpen = openCommentsPostId === item.id
+                const comments = commentsByPost[item.id] || []
 
                 return (
                   <li key={item.id} className="p-5 transition-colors hover:bg-slate-50">
                     {isEditing ? (
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={editFeedback.title}
-                          onChange={(e) => setEditFeedback({ ...editFeedback, title: e.target.value })}
-                          className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        />
-                        <textarea
-                          rows={4}
-                          value={editFeedback.message}
-                          onChange={(e) => setEditFeedback({ ...editFeedback, message: e.target.value })}
-                          className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        />
+                      <div className="space-y-4">
+                        {renderPostFields(editFeedback, setEditFeedback)}
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleUpdateFeedback(item.id)}
-                            className="rounded-md px-3 py-1.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancelEdit}
-                            className="rounded-md px-3 py-1.5 text-sm font-medium bg-slate-100 text-slate-800 hover:bg-slate-200"
-                          >
-                            Cancel
-                          </button>
+                          <button onClick={() => handleUpdateFeedback(item.id)} className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700">Save</button>
+                          <button onClick={handleCancelEdit} className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-200">Cancel</button>
                         </div>
                       </div>
                     ) : (
@@ -445,62 +716,74 @@ export default function FeedbackPage() {
                         <div className="flex justify-between gap-4">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-lg font-semibold text-slate-950">{item.title}</h3>
-                              {viewMode === 'mine' && (
-                                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusClass(item.status)}`}>
-                                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                                </span>
-                              )}
+                              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{item.category}</span>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{item.experienceType}</span>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{item.city}</span>
+                              {viewMode === 'mine' && <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getStatusClass(item.status)}`}>{item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span>}
                             </div>
-                            <p className="text-slate-600 mt-1">{item.message}</p>
+                            <Link href={`/post/${item.id}`} className="mt-3 block text-lg font-semibold text-slate-950 hover:text-blue-700">{item.title}</Link>
+                            <p className="mt-1 text-sm font-medium text-slate-500">About <Link href={`/company/${slugify(item.subject)}`} className="text-blue-700 hover:text-blue-800">{item.subject}</Link></p>
+                            <p className="mt-2 text-slate-600">{item.message}</p>
                           </div>
                           {item.status === 'approved' && (
-                            <button
-                              onClick={() => handleLike(item.id)}
-                              className={`flex items-center gap-1 self-start transition-all duration-200 ${
-                                item.isLiked ? 'text-blue-600 scale-110' : 'text-slate-500 hover:text-blue-500'
-                              }`}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                fill={item.isLiked ? 'currentColor' : 'none'}
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
-                                />
-                              </svg>
-                              {item.likes}
+                            <button onClick={() => handleLike(item.id)} className={`flex items-center gap-1 self-start transition-all duration-200 ${item.isLiked ? 'scale-110 text-blue-600' : 'text-slate-500 hover:text-blue-500'}`}>
+                              <span>{item.isLiked ? 'Liked' : 'Like'}</span>
+                              <span>{item.likes}</span>
                             </button>
                           )}
                         </div>
-                        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-slate-500">
-                          <div className="flex justify-between gap-4 sm:contents">
-                            <span>By {item.user}</span>
+                        <div className="mt-3 flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1">
+                            {item.isAnonymous ? <span>By Anonymous</span> : <span>By <Link href={`/user/${slugify(item.user)}`} className="font-medium text-blue-700 hover:text-blue-800">{item.user}</Link></span>}
                             <span>{new Date(item.date).toLocaleDateString()}</span>
+                            {item.isAnonymous && <span>Anonymous post</span>}
                           </div>
-                          {viewMode === 'mine' && item.status === 'pending' && (
-                            <div className="flex gap-3">
-                              <button
-                                onClick={() => handleStartEdit(item)}
-                                className="text-blue-600 hover:text-blue-800 font-medium"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteFeedback(item.id)}
-                                className="text-red-600 hover:text-red-800 font-medium"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex flex-wrap gap-3">
+                            {item.status === 'approved' && <button onClick={() => handleSave(item.id)} className={`inline-flex items-center gap-1 font-medium ${item.isSaved ? 'text-blue-700' : 'text-slate-600 hover:text-blue-700'}`}>{item.isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}{item.isSaved ? 'Saved' : 'Save'}</button>}
+                            {item.status === 'approved' && <Link href={`/post/${item.id}`} className="font-medium text-blue-600 hover:text-blue-800">View post</Link>}
+                            {item.status === 'approved' && <button onClick={() => toggleComments(item.id)} className="font-medium text-blue-600 hover:text-blue-800">{isCommentsOpen ? 'Hide replies' : `${item.commentsCount} replies`}</button>}
+                            {item.status === 'approved' && <button onClick={() => openReport({ type: 'feedback', id: item.id })} className="font-medium text-slate-600 hover:text-slate-950">Report</button>}
+                            {viewMode === 'mine' && item.status === 'pending' && <button onClick={() => handleStartEdit(item)} className="font-medium text-blue-600 hover:text-blue-800">Edit</button>}
+                            {viewMode === 'mine' && item.status === 'pending' && <button onClick={() => handleDeleteFeedback(item.id)} className="font-medium text-red-600 hover:text-red-800">Delete</button>}
+                          </div>
                         </div>
+
+                        {isCommentsOpen && (
+                          <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4">
+                            <div className="space-y-3">
+                              {comments.length === 0 ? (
+                                <p className="text-sm text-slate-500">No replies yet.</p>
+                              ) : comments.map(comment => (
+                                <div key={comment.id} className="rounded-md bg-white p-3 shadow-sm">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                      <p className="text-sm text-slate-700">{comment.message}</p>
+                                      <p className="mt-1 text-xs text-slate-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
+                                    </div>
+                                    <div className="flex gap-2 text-xs font-medium">
+                                      <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-slate-500 hover:text-slate-950">Report</button>
+                                      {comment.isCurrentUser && <button onClick={() => handleDeleteComment(item.id, comment.id)} className="text-red-600 hover:text-red-800">Delete</button>}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-4 space-y-2">
+                              <textarea value={commentDrafts[item.id] || ''} onChange={(e) => setCommentDrafts(prev => ({ ...prev, [item.id]: e.target.value }))} rows={3} placeholder="Reply with your experience or advice..." className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <label className="flex items-center gap-2 text-sm text-slate-600">
+                                  <input type="checkbox" checked={Boolean(anonymousCommentDrafts[item.id])} onChange={(e) => setAnonymousCommentDrafts(prev => ({ ...prev, [item.id]: e.target.checked }))} />
+                                  Reply anonymously
+                                </label>
+                                {activeUser ? (
+                                  <button onClick={() => handleAddComment(item.id)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Add Reply</button>
+                                ) : (
+                                  <Link href="/login" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Log in to reply</Link>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </li>
@@ -510,27 +793,39 @@ export default function FeedbackPage() {
           )}
 
           {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-200 flex justify-center gap-2">
+            <div className="flex justify-center gap-2 border-t border-slate-200 p-4">
               {Array.from({ length: totalPages }, (_, index) => {
                 const pageNumber = index + 1
-
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className={currentPage === pageNumber
-                      ? 'rounded-md px-3 py-1.5 text-sm font-medium transition-colors bg-blue-600 text-white'
-                      : 'rounded-md px-3 py-1.5 text-sm font-medium transition-colors bg-slate-100 text-slate-800 hover:bg-slate-200'
-                    }
-                  >
-                    {pageNumber}
-                  </button>
-                )
+                return <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={currentPage === pageNumber ? 'rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors' : 'rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200'}>{pageNumber}</button>
               })}
             </div>
           )}
         </div>
       </div>
+
+      {reportingTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-950">Report content</h2>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Reason</label>
+                <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                  {REPORT_REASONS.map(reason => <option key={reason}>{reason}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Details</label>
+                <textarea value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} rows={4} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" placeholder="Add context for the moderator." />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setReportingTarget(null)} className="rounded-md bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-200">Cancel</button>
+              <button onClick={handleSubmitReport} className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Submit Report</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

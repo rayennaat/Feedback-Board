@@ -36,6 +36,12 @@ export async function GET(req: NextRequest) {
         },
         likedBy: {
           select: { id: true }
+        },
+        savedBy: {
+          select: { id: true }
+        },
+        _count: {
+          select: { comments: true }
         }
       }
     })
@@ -44,17 +50,24 @@ export async function GET(req: NextRequest) {
       id: item.id,
       title: item.title,
       message: item.message,
+      category: item.category,
+      subject: item.subject,
+      city: item.city,
+      experienceType: item.experienceType,
+      isAnonymous: item.isAnonymous,
       likes: item.likes,
+      commentsCount: item._count.comments,
       date: item.date.toISOString(),
-      user: item.user.username,
+      user: item.isAnonymous ? 'Anonymous' : item.user.username,
       status: item.status,
       isCurrentUser: true,
-      likedByCurrentUser: item.likedBy.some(user => user.id === userId)
+      likedByCurrentUser: item.likedBy.some(user => user.id === userId),
+      savedByCurrentUser: item.savedBy.some(user => user.id === userId)
     }))
 
     return NextResponse.json(formatted)
   } catch (err) {
-    console.error('Fetch user feedback error:', err)
-    return NextResponse.json({ error: 'Failed to fetch your feedback' }, { status: 500 })
+    console.error('Fetch user posts error:', err)
+    return NextResponse.json({ error: 'Failed to fetch your posts' }, { status: 500 })
   }
 }

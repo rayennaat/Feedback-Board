@@ -1,371 +1,502 @@
-// app/dashboard/page.tsx
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import { useEffect, useMemo, useState } from 'react'
+import toast, { Toaster } from 'react-hot-toast'
+import { TUNISIA_CATEGORIES } from '@/lib/tunisia-context'
 
-interface Feedback {
-  id: number;
-  title: string;
-  message: string;
-  likes: number;
-  date: string;
-  user: string;
-  status: 'pending' | 'approved' | 'rejected';
+type PostStatus = 'pending' | 'approved' | 'rejected'
+type ReportStatus = 'open' | 'reviewed' | 'dismissed'
+type Section = 'posts' | 'comments' | 'users'
+type PostView = 'pending' | 'approved' | 'reported' | 'hidden' | 'all'
+
+interface Post {
+  id: number
+  title: string
+  message: string
+  category: string
+  subject: string
+  city: string
+  experienceType: string
+  isAnonymous: boolean
+  likes: number
+  commentsCount: number
+  reportsCount: number
+  date: string
+  user: string
+  authorUsername: string
+  status: PostStatus
+  moderationReason: string
+  adminNote: string
+}
+
+interface ReportPostSummary {
+  id: number
+  title: string
+  subject: string
+  category: string
+  status: PostStatus
+  reportsCount?: number
+  authorUsername?: string
+  isAnonymous?: boolean
+}
+
+interface Report {
+  id: number
+  reason: string
+  details: string
+  targetType: 'feedback' | 'comment'
+  status: ReportStatus
+  date: string
+  reporter: string
+  feedback: null | ReportPostSummary
+  comment: null | {
+    id: number
+    message: string
+    feedbackId: number
+    isHidden: boolean
+    hiddenReason: string
+    reportsCount: number
+    authorUsername: string
+    feedback?: ReportPostSummary
+  }
+}
+
+interface AdminUser {
+  id: number
+  username: string
+  email: string
+  createdAt: string
+  isAdmin: boolean
+  isSuspended: boolean
+  postsCount: number
+  commentsCount: number
+  reportsCount: number
+}
+
+const statusClass = (status: PostStatus | ReportStatus) => {
+  if (status === 'approved' || status === 'reviewed') return 'bg-green-100 text-green-800'
+  if (status === 'pending' || status === 'open') return 'bg-yellow-100 text-yellow-800'
+  if (status === 'rejected') return 'bg-red-100 text-red-800'
+  return 'bg-slate-100 text-slate-700'
 }
 
 export default function DashboardPage() {
-  const [feedback, setFeedback] = useState<Feedback[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const FEEDBACK_PER_PAGE = 10;
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10
+  const [section, setSection] = useState<Section>('posts')
+  const [postView, setPostView] = useState<PostView>('pending')
+  const [posts, setPosts] = useState<Post[]>([])
+  const [reports, setReports] = useState<Report[]>([])
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [reportStatusFilter, setReportStatusFilter] = useState<'all' | ReportStatus>('open')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [sortBy, setSortBy] = useState<'latest' | 'most-reported' | 'most-discussed' | 'most-liked'>('latest')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
 
-  // Fetch feedback data
+  const fetchPosts = async () => {
+    const response = await fetch('/api/feedback/admin', { credentials: 'include' })
+    if (!response.ok) throw new Error('Failed to fetch posts')
+    setPosts(await response.json())
+  }
+
+  const fetchReports = async () => {
+    const response = await fetch('/api/reports', { credentials: 'include' })
+    if (!response.ok) throw new Error('Failed to fetch reports')
+    setReports(await response.json())
+  }
+
+  const fetchUsers = async () => {
+    const response = await fetch('/api/users', { credentials: 'include' })
+    if (!response.ok) throw new Error('Failed to fetch users')
+    setUsers(await response.json())
+  }
+
   useEffect(() => {
-    const fetchFeedback = async () => {
+    const loadDashboard = async () => {
       try {
-        const response = await fetch('/api/feedback/admin');
-        if (!response.ok) {
-          throw new Error('Failed to fetch feedback');
-        }
-        const data = await response.json();
-        setFeedback(data);
+        await Promise.all([fetchPosts(), fetchReports(), fetchUsers()])
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setError(err instanceof Error ? err.message : 'An unknown error occurred')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-
-    fetchFeedback();
-  }, []);
-
-  const deleteFeedback = async (id: number) => {
-  try {
-    const response = await fetch(`/api/feedback/${id}/delete`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete feedback');
     }
 
-    // Show success toast
-    toast.success('Feedback deleted successfully', {
-      position: 'top-right',
-      duration: 3000,
-      style: {
-        background: '#4BB543',
-        color: '#white',
-      },
-    });
+    loadDashboard()
+  }, [])
 
-    // Update local state to remove the deleted feedback
-    setFeedback(prev => prev.filter(item => item.id !== id));
-    
-  } catch (err) {
-    // Show error toast
-    toast.error(err instanceof Error ? err.message : 'Failed to delete feedback', {
-      position: 'top-right',
-      duration: 3000,
-      style: {
-        background: '#FF3333',
-        color: '#white',
-      },
-    });
-  }
-};
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [section, postView, reportStatusFilter, categoryFilter, sortBy, searchQuery])
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' })
     } finally {
-      window.location.href = '/login';
+      window.location.href = '/login'
     }
-  };
+  }
 
-  const updateStatus = async (id: number, newStatus: 'pending' | 'approved' | 'rejected') => {
+  const deletePost = async (id: number) => {
+    if (!window.confirm('Delete this post permanently?')) return
+
+    try {
+      const response = await fetch(`/api/feedback/${id}/delete`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete post')
+      }
+
+      toast.success('Post deleted')
+      setPosts(prev => prev.filter(item => item.id !== id))
+      setReports(prev => prev.filter(report => report.feedback?.id !== id && report.comment?.feedbackId !== id))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete post')
+    }
+  }
+
+  const deleteComment = async (id: number) => {
+    if (!window.confirm('Delete this comment permanently?')) return
+
+    try {
+      const response = await fetch(`/api/comments/${id}/delete`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete comment')
+      }
+
+      toast.success('Comment deleted')
+      setReports(prev => prev.filter(report => report.comment?.id !== id))
+      setPosts(prev => prev.map(post => ({ ...post, commentsCount: Math.max(0, post.commentsCount - 1) })))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete comment')
+    }
+  }
+
+  const updatePostStatus = async (id: number, status: PostStatus) => {
+    const moderationReason = status === 'rejected' ? window.prompt('Why hide/reject this post?', 'Needs moderation review')?.trim() || '' : ''
+    if (status === 'rejected' && !moderationReason) return
+    const adminNote = status === 'rejected' ? window.prompt('Optional admin note for internal context:', '')?.trim() || '' : ''
+
     try {
       const response = await fetch(`/api/feedback/${id}/status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status, moderationReason, adminNote })
+      })
+
+      if (!response.ok) throw new Error('Failed to update post status')
+
+      setPosts(prev => prev.map(item => (item.id === id ? { ...item, status, moderationReason, adminNote } : item)))
+      setReports(prev => prev.map(report => {
+        if (report.feedback?.id === id) return { ...report, feedback: { ...report.feedback, status } }
+        if (report.comment?.feedback?.id === id) return { ...report, comment: { ...report.comment, feedback: { ...report.comment.feedback, status } } }
+        return report
+      }))
+      toast.success(status === 'rejected' ? 'Post hidden' : 'Post status updated')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update post status')
+    }
+  }
+
+  const updateReportStatus = async (id: number, status: ReportStatus) => {
+    try {
+      const response = await fetch(`/api/reports/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status })
+      })
+
+      if (!response.ok) throw new Error('Failed to update report')
+
+      setReports(prev => prev.map(report => (report.id === id ? { ...report, status } : report)))
+      toast.success('Report updated')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update report')
+    }
+  }
+
+  const toggleUserSuspension = async (userId: number, isSuspended: boolean) => {
+    if (!window.confirm(isSuspended ? 'Suspend this user?' : 'Unsuspend this user?')) return
+
+    try {
+      const response = await fetch(`/api/users/${userId}/suspend`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ isSuspended })
+      })
 
       if (!response.ok) {
-        throw new Error('Failed to update feedback status');
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update user')
       }
 
-      // Update local state with the new status
-      setFeedback(prev =>
-        prev.map(item => (item.id === id ? { ...item, status: newStatus } : item))
-      );
+      setUsers(prev => prev.map(user => user.id === userId ? { ...user, isSuspended } : user))
+      toast.success(isSuspended ? 'User suspended' : 'User unsuspended')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update feedback status');
+      toast.error(err instanceof Error ? err.message : 'Failed to update user')
     }
-  };
+  }
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filter, searchQuery]);
+  const query = searchQuery.trim().toLowerCase()
+  const reportedPostIds = useMemo(() => new Set(reports.filter(report => report.targetType === 'feedback').map(report => report.feedback?.id).filter(Boolean)), [reports])
 
-  const filteredFeedback = feedback
-    .filter(item => filter === 'all' || item.status === filter)
-    .filter(item =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.user.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const visiblePosts = useMemo(() => {
+    const matchesSearch = (post: Post) => {
+      if (categoryFilter !== 'all' && post.category !== categoryFilter) return false
+      if (!query) return true
+      return [post.title, post.message, post.user, post.authorUsername, post.category, post.subject, post.city, post.experienceType]
+        .some(value => value.toLowerCase().includes(query))
+    }
 
-  const totalPages = Math.ceil(filteredFeedback.length / FEEDBACK_PER_PAGE);
-  const paginatedFeedback = filteredFeedback.slice(
-    (currentPage - 1) * FEEDBACK_PER_PAGE,
-    currentPage * FEEDBACK_PER_PAGE
-  );
+    const filtered = posts
+      .filter(post => {
+        if (postView === 'pending') return post.status === 'pending'
+        if (postView === 'approved') return post.status === 'approved'
+        if (postView === 'reported') return reportedPostIds.has(post.id)
+        if (postView === 'hidden') return post.status === 'rejected'
+        return true
+      })
+      .filter(matchesSearch)
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'most-reported') return b.reportsCount - a.reportsCount
+      if (sortBy === 'most-discussed') return b.commentsCount - a.commentsCount
+      if (sortBy === 'most-liked') return b.likes - a.likes
+      return new Date(b.date).getTime() - new Date(a.date).getTime()
+    })
+  }, [categoryFilter, postView, posts, query, reportedPostIds, sortBy])
+
+  const visibleCommentReports = useMemo(() => reports
+    .filter(report => report.targetType === 'comment')
+    .filter(report => reportStatusFilter === 'all' || report.status === reportStatusFilter)
+    .filter(report => {
+      const post = report.comment?.feedback
+      if (categoryFilter !== 'all' && post?.category !== categoryFilter) return false
+      if (!query) return true
+      return [report.reason, report.details, report.reporter, report.comment?.message || '', report.comment?.authorUsername || '', post?.title || '', post?.subject || '']
+        .some(value => value.toLowerCase().includes(query))
+    }), [categoryFilter, query, reportStatusFilter, reports])
+
+  const visibleUsers = useMemo(() => users.filter(user => {
+    if (!query) return true
+    return [user.username, user.email, user.isSuspended ? 'suspended' : 'active', user.isAdmin ? 'admin' : 'user']
+      .some(value => value.toLowerCase().includes(query))
+  }), [query, users])
+
+  const activeItems = section === 'posts' ? visiblePosts : section === 'comments' ? visibleCommentReports : visibleUsers
+  const totalPages = Math.ceil(activeItems.length / ITEMS_PER_PAGE)
+  const paginatedItems = activeItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  const pendingCount = posts.filter(post => post.status === 'pending').length
+  const approvedCount = posts.filter(post => post.status === 'approved').length
+  const reportedPostCount = reports.filter(report => report.targetType === 'feedback' && report.status === 'open').length
+  const reportedCommentCount = reports.filter(report => report.targetType === 'comment' && report.status === 'open').length
+  const suspendedCount = users.filter(user => user.isSuspended).length
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-xl font-medium text-slate-700">Loading...</div>
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center bg-slate-50"><div className="text-xl font-medium text-slate-700">Loading...</div></div>
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-xl font-medium text-red-600">Error: {error}</div>
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center bg-slate-50"><div className="text-xl font-medium text-red-600">Error: {error}</div></div>
   }
 
+  const renderPostRow = (post: Post) => (
+    <tr key={`post-${post.id}`} className="hover:bg-slate-50">
+      <td className="whitespace-nowrap px-5 py-4"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusClass(post.status)}`}>{post.status}</span></td>
+      <td className="px-5 py-4">
+        <div className="text-sm font-semibold text-slate-950">{post.title}</div>
+        <div className="mt-1 max-w-sm text-sm text-slate-500 line-clamp-2">{post.message}</div>
+        <div className="mt-2 text-xs font-medium text-slate-500">{post.experienceType} / {post.city}</div>
+      </td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{post.subject}</td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{post.category}</td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+        <div>{post.user}{post.isAnonymous ? ' (public anonymous)' : ''}</div>
+        {post.isAnonymous && <div className="text-xs text-slate-500">Admin: {post.authorUsername}</div>}
+      </td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+        <div>{post.likes} likes / {post.commentsCount} replies / {post.reportsCount} reports</div>
+        {post.moderationReason && <div className="mt-1 max-w-xs text-xs text-red-700">Reason: {post.moderationReason}</div>}
+        {post.adminNote && <div className="mt-1 max-w-xs text-xs text-slate-500">Note: {post.adminNote}</div>}
+      </td>
+      <td className="px-5 py-4 text-sm font-medium">
+        <div className="flex flex-wrap gap-2">
+          {post.status !== 'approved' && <button onClick={() => updatePostStatus(post.id, 'approved')} className="rounded-md bg-green-100 px-3 py-1.5 text-green-800 hover:bg-green-200">Approve</button>}
+          {post.status !== 'rejected' && <button onClick={() => updatePostStatus(post.id, 'rejected')} className="rounded-md bg-yellow-100 px-3 py-1.5 text-yellow-900 hover:bg-yellow-200">Hide</button>}
+          {post.status !== 'pending' && <button onClick={() => updatePostStatus(post.id, 'pending')} className="rounded-md bg-slate-100 px-3 py-1.5 text-slate-800 hover:bg-slate-200">Move pending</button>}
+          <button onClick={() => deletePost(post.id)} className="rounded-md bg-red-100 px-3 py-1.5 text-red-800 hover:bg-red-200">Delete</button>
+        </div>
+      </td>
+    </tr>
+  )
+
+  const renderCommentReport = (report: Report) => {
+    const comment = report.comment
+    const post = comment?.feedback
+    if (!comment) return null
+
+    return (
+      <li key={`comment-report-${report.id}`} className="p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusClass(report.status)}`}>{report.status}</span>
+              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">reported comment</span>
+              {post && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{post.category}</span>}
+            </div>
+            <h3 className="mt-3 text-base font-semibold text-slate-950">{report.reason}</h3>
+            {report.details && <p className="mt-1 text-sm text-slate-600">{report.details}</p>}
+            <p className="mt-2 text-sm text-slate-500">Reported by {report.reporter} on {new Date(report.date).toLocaleDateString()}</p>
+            <p className="mt-2 text-sm text-slate-700">Comment by {comment.authorUsername}: {comment.message}</p>
+            {post && <p className="mt-2 text-sm text-slate-600">On post: {post.title} / {post.subject} / {post.status}</p>}
+          </div>
+          <div className="flex flex-wrap gap-2 text-sm font-medium">
+            {report.status !== 'reviewed' && <button onClick={() => updateReportStatus(report.id, 'reviewed')} className="rounded-md bg-green-100 px-3 py-1.5 text-green-800 hover:bg-green-200">Mark reviewed</button>}
+            {report.status !== 'dismissed' && <button onClick={() => updateReportStatus(report.id, 'dismissed')} className="rounded-md bg-slate-100 px-3 py-1.5 text-slate-800 hover:bg-slate-200">Dismiss</button>}
+            <button onClick={() => deleteComment(comment.id)} className="rounded-md bg-red-100 px-3 py-1.5 text-red-800 hover:bg-red-200">Delete comment</button>
+          </div>
+        </div>
+      </li>
+    )
+  }
+
+  const renderUserRow = (user: AdminUser) => (
+    <tr key={`user-${user.id}`} className="hover:bg-slate-50">
+      <td className="px-5 py-4">
+        <div className="text-sm font-semibold text-slate-950">{user.username}</div>
+        <div className="text-sm text-slate-500">{user.email}</div>
+      </td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{new Date(user.createdAt).toLocaleDateString()}</td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{user.postsCount} posts / {user.commentsCount} comments / {user.reportsCount} reports</td>
+      <td className="whitespace-nowrap px-5 py-4">
+        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${user.isSuspended ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{user.isSuspended ? 'suspended' : 'active'}</span>
+        {user.isAdmin && <span className="ml-2 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">admin</span>}
+      </td>
+      <td className="px-5 py-4 text-sm font-medium">
+        {!user.isAdmin && <button onClick={() => toggleUserSuspension(user.id, !user.isSuspended)} className={user.isSuspended ? 'rounded-md bg-green-100 px-3 py-1.5 text-green-800 hover:bg-green-200' : 'rounded-md bg-orange-100 px-3 py-1.5 text-orange-900 hover:bg-orange-200'}>{user.isSuspended ? 'Unsuspend' : 'Suspend'}</button>}
+      </td>
+    </tr>
+  )
+
   return (
-    <div className="min-h-screen bg-slate-50 py-6 px-4 text-slate-950 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
       <Toaster position="top-right" />
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-950">Admin Dashboard</h1>
-            <p className="mt-1 text-slate-600">Manage user feedback</p>
+            <p className="mt-1 text-slate-600">Posts, reported comments, and users are managed separately.</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100"
-          >
-            Logout
-          </button>
+          <button onClick={handleLogout} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100">Logout</button>
         </div>
 
-        {/* Filters and Search */}
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Pending Posts</h3><p className="text-2xl font-semibold text-yellow-600">{pendingCount}</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Approved Posts</h3><p className="text-2xl font-semibold text-green-600">{approvedCount}</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Reported Posts</h3><p className="text-2xl font-semibold text-red-600">{reportedPostCount}</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Reported Comments</h3><p className="text-2xl font-semibold text-red-600">{reportedCommentCount}</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Suspended Users</h3><p className="text-2xl font-semibold text-slate-950">{suspendedCount}</p></div>
+        </div>
+
         <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex space-x-2 overflow-x-auto pb-2 sm:pb-0">
-              <button
-                onClick={() => setFilter('all')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap ${filter === 'all' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                All Feedback
-              </button>
-              <button
-                onClick={() => setFilter('pending')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap ${filter === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                Pending Review
-              </button>
-              <button
-                onClick={() => setFilter('approved')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap ${filter === 'approved' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                Approved
-              </button>
-              <button
-                onClick={() => setFilter('rejected')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap ${filter === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800'}`}
-              >
-                Rejected
-              </button>
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {(['posts', 'comments', 'users'] as Section[]).map(item => (
+                <button key={item} onClick={() => setSection(item)} className={`rounded-md px-4 py-2 text-sm font-semibold capitalize ${section === item ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>{item}</button>
+              ))}
             </div>
-            <div className="w-full sm:w-auto">
-              <input
-                type="text"
-                placeholder="Search feedback..."
-                className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="grid gap-3 md:grid-cols-4">
+              {section !== 'users' && (
+                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                  <option value="all">All categories</option>
+                  {TUNISIA_CATEGORIES.map(category => <option key={category}>{category}</option>)}
+                </select>
+              )}
+              {section === 'posts' && (
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                  <option value="latest">Latest</option>
+                  <option value="most-reported">Most reported</option>
+                  <option value="most-discussed">Most discussed</option>
+                  <option value="most-liked">Most liked</option>
+                </select>
+              )}
+              {section === 'comments' && (
+                <select value={reportStatusFilter} onChange={(e) => setReportStatusFilter(e.target.value as typeof reportStatusFilter)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                  <option value="open">Open reports</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="dismissed">Dismissed</option>
+                  <option value="all">All report statuses</option>
+                </select>
+              )}
+              <input type="text" placeholder={section === 'users' ? 'Search users...' : 'Search title, user, city, category...'} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder:text-slate-500 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:col-span-2" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-medium text-slate-500">Total Feedback</h3>
-            <p className="text-2xl font-semibold text-slate-950">{feedback.length}</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-medium text-slate-500">Pending</h3>
-            <p className="text-2xl font-semibold text-yellow-600">
-              {feedback.filter(f => f.status === 'pending').length}
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-medium text-slate-500">Approved</h3>
-            <p className="text-2xl font-semibold text-green-600">
-              {feedback.filter(f => f.status === 'approved').length}
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-medium text-slate-500">Rejected</h3>
-            <p className="text-2xl font-semibold text-red-600">
-              {feedback.filter(f => f.status === 'rejected').length}
-            </p>
-          </div>
-        </div>
-
-        {/* Feedback Table */}
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          {filteredFeedback.length === 0 ? (
-            <div className="p-6 text-center text-slate-500">
-              No feedback found matching your criteria
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Status
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Title
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      User
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Date
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Likes
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                  {paginatedFeedback.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50">
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          item.status === 'approved' 
-                            ? 'bg-green-100 text-green-800' 
-                            : item.status === 'pending' 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : 'bg-red-100 text-red-800'
-                        }`}>
-                          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div className="text-sm font-medium text-slate-950">{item.title}</div>
-                        <div className="text-sm text-slate-500 line-clamp-1 max-w-xs">{item.message}</div>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
-                        {item.user}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
-                        {new Date(item.date).toLocaleDateString()}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
-                        {item.likes}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          {item.status !== 'approved' && (
-                            <button
-                              onClick={() => updateStatus(item.id, 'approved')}
-                              className="text-green-600 hover:text-green-900"
-                              title="Approve"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          )}
-                          {item.status !== 'pending' && (
-                            <button
-                              onClick={() => updateStatus(item.id, 'pending')}
-                              className="text-yellow-600 hover:text-yellow-900"
-                              title="Mark as Pending"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          )}
-                          {item.status !== 'rejected' && (
-                            <button
-                              onClick={() => updateStatus(item.id, 'rejected')}
-                              className="text-red-600 hover:text-red-900"
-                              title="Reject"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          )}
-                          <button
-                            onClick={() => deleteFeedback(item.id)}
-                            className="text-slate-600 hover:text-slate-950"
-                            title="Delete"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-200 flex justify-center gap-2">
-              {Array.from({ length: totalPages }, (_, index) => {
-                const pageNumber = index + 1;
-
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className={currentPage === pageNumber
-                      ? 'rounded-md px-3 py-1.5 text-sm font-medium transition-colors bg-blue-600 text-white'
-                      : 'rounded-md px-3 py-1.5 text-sm font-medium transition-colors bg-slate-100 text-slate-800 hover:bg-slate-200'
-                    }
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
+          {section === 'posts' && (
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
+              {(['pending', 'approved', 'reported', 'hidden', 'all'] as PostView[]).map(item => (
+                <button key={item} onClick={() => setPostView(item)} className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize ${postView === item ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>{item === 'hidden' ? 'Hidden/deleted' : `${item} posts`}</button>
+              ))}
             </div>
           )}
         </div>
+
+        {section === 'posts' && (
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            {paginatedItems.length === 0 ? <div className="p-6 text-center text-slate-500">No posts found.</div> : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50"><tr>{['Status', 'Title', 'Subject', 'Category', 'User', 'Engagement', 'Actions'].map(header => <th key={header} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{header}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">{(paginatedItems as Post[]).map(renderPostRow)}</tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {section === 'comments' && (
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            {paginatedItems.length === 0 ? <div className="p-6 text-center text-slate-500">No reported comments found.</div> : <ul className="divide-y divide-slate-200">{(paginatedItems as Report[]).map(renderCommentReport)}</ul>}
+          </div>
+        )}
+
+        {section === 'users' && (
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            {paginatedItems.length === 0 ? <div className="p-6 text-center text-slate-500">No users found.</div> : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50"><tr>{['User', 'Joined', 'Activity', 'Status', 'Actions'].map(header => <th key={header} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{header}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">{(paginatedItems as AdminUser[]).map(renderUserRow)}</tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-4 flex justify-center gap-2">
+            {Array.from({ length: totalPages }, (_, index) => {
+              const pageNumber = index + 1
+              return <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={currentPage === pageNumber ? 'rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white' : 'rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-200'}>{pageNumber}</button>
+            })}
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }

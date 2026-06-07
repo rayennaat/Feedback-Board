@@ -32,9 +32,14 @@ export async function GET(req: NextRequest) {
       include: {
         user: {
           select: {
+            id: true,
             username: true,
-            email: true
+            email: true,
+            isSuspended: true
           }
+        },
+        _count: {
+          select: { comments: true, reports: true }
         }
       }
     })
@@ -43,16 +48,30 @@ export async function GET(req: NextRequest) {
       id: item.id,
       title: item.title,
       message: item.message,
+      category: item.category,
+      subject: item.subject,
+      city: item.city,
+      experienceType: item.experienceType,
+      isAnonymous: item.isAnonymous,
       likes: item.likes,
+      commentsCount: item._count.comments,
+      reportsCount: item._count.reports,
       date: item.date.toISOString(),
-      user: item.user.username,
-      status: item.status
+      user: item.isAnonymous ? 'Anonymous' : item.user.username,
+      authorId: item.user.id,
+      authorUsername: item.user.username,
+      authorEmail: item.user.email,
+      authorIsSuspended: item.user.isSuspended,
+      status: item.status,
+      moderationReason: item.moderationReason,
+      adminNote: item.adminNote
     }))
 
     return NextResponse.json(formatted)
-  } catch {
+  } catch (err) {
+    console.error('Admin fetch error:', err)
     return NextResponse.json(
-      { error: 'Failed to fetch feedback' },
+      { error: 'Failed to fetch posts' },
       { status: 500 }
     )
   }

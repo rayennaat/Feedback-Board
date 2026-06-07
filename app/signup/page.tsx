@@ -41,9 +41,9 @@ export default function SignupPage() {
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-950">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center justify-center">
         <section className="w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <Link href="/" className="text-sm font-medium text-slate-500 hover:text-slate-950">Feedback Board</Link>
+          <Link href="/" className="text-sm font-medium text-slate-500 hover:text-slate-950">Feedback TN</Link>
           <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-950">Create an account</h1>
-          <p className="mt-2 text-sm text-slate-600">Start submitting and tracking product feedback.</p>
+          <p className="mt-2 text-sm text-slate-600">Start sharing real experiences from Tunisia in Tounsi, Arabic, French, or English.</p>
 
           <form onSubmit={handleSignup} className="mt-6 space-y-5">
             <div>

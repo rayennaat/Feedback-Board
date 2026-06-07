@@ -15,8 +15,13 @@ model User {
   password  String
   createdAt DateTime   @default(now())
   feedbacks Feedback[] // <-- this line connects the relation
-  liked     Feedback[] @relation("FeedbackLikes")
-  isAdmin   Boolean    @default(false) // ← add this line
+  liked        Feedback[]     @relation("FeedbackLikes")
+  saved        Feedback[]     @relation("SavedFeedback")
+  comments     Comment[]
+  reports      Report[]
+  notifications Notification[]
+  isAdmin      Boolean        @default(false) // ← add this line
+  isSuspended  Boolean        @default(false)
 }
 
 enum FeedbackStatus {
@@ -26,14 +31,81 @@ enum FeedbackStatus {
 }
 
 model Feedback {
-  id       Int            @id @default(autoincrement())
-  title    String
-  message  String
-  date     DateTime       @default(now())
-  likes    Int            @default(0)
-  userId   Int
-  user     User           @relation(fields: [userId], references: [id])
-  likedBy  User[]         @relation("FeedbackLikes")
-  status   FeedbackStatus @default(pending) // This must exist
+  id             Int            @id @default(autoincrement())
+  title          String
+  message        String
+  category       String         @default("General Question")
+  subject        String         @default("")
+  city           String         @default("")
+  experienceType String         @default("Question")
+  isAnonymous    Boolean        @default(false)
+  date           DateTime       @default(now())
+  likes          Int            @default(0)
+  userId         Int
+  user           User           @relation(fields: [userId], references: [id])
+  likedBy        User[]         @relation("FeedbackLikes")
+  comments       Comment[]
+  reports        Report[]
+  savedBy        User[]         @relation("SavedFeedback")
+  status         FeedbackStatus @default(pending) // This must exist
+  moderationReason String       @default("")
+  adminNote      String         @default("")
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  message    String
+  date       DateTime @default(now())
+  isAnonymous Boolean @default(false)
+  isHidden    Boolean @default(false)
+  hiddenReason String @default("")
+  feedbackId Int
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports    Report[]
+}
+
+enum ReportTargetType {
+  feedback
+  comment
+}
+
+enum ReportStatus {
+  open
+  reviewed
+  dismissed
+}
+
+enum NotificationType {
+  comment
+  status
+  reply
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  type      NotificationType
+  message   String
+  link      String           @default("")
+  isRead    Boolean          @default(false)
+  date      DateTime         @default(now())
+  userId    Int
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id         Int              @id @default(autoincrement())
+  reason     String
+  details    String           @default("")
+  targetType ReportTargetType
+  status     ReportStatus     @default(open)
+  date       DateTime         @default(now())
+  reporterId Int
+  reporter   User             @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  feedbackId Int?
+  feedback   Feedback?        @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  commentId  Int?
+  comment    Comment?         @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
 

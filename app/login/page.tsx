@@ -41,10 +41,10 @@ export default function LoginPage() {
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl items-center justify-center">
         <div className="grid w-full gap-6 lg:grid-cols-[1fr_380px]">
           <section className="hidden rounded-lg border border-slate-200 bg-white p-8 shadow-sm lg:block">
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Feedback Board</p>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">Sign in to manage and review feedback.</h1>
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Feedback TN</p>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">Sign in to share and review Tunisian experiences.</h1>
             <p className="mt-4 leading-7 text-slate-600">
-              Users can submit ideas and track their status. Admins can approve, reject, and keep the board focused.
+              People can share reviews, warnings, questions, and recommendations from across Tunisia in Tounsi, Arabic, French, or English. Admins keep the community useful and respectful.
             </p>
             <div className="mt-8 rounded-md border border-blue-100 bg-blue-50 p-4">
               <h2 className="font-semibold text-blue-950">Demo admin</h2>
@@ -72,9 +72,9 @@ export default function LoginPage() {
           </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <Link href="/" className="text-sm font-medium text-slate-500 hover:text-slate-950">Feedback Board</Link>
+            <Link href="/" className="text-sm font-medium text-slate-500 hover:text-slate-950">Feedback TN</Link>
             <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-950">Log in</h1>
-            <p className="mt-2 text-sm text-slate-600">Use your account to continue to the board.</p>
+            <p className="mt-2 text-sm text-slate-600">Use your account to continue to the community feed.</p>
 
             <form onSubmit={handleLogin} className="mt-6 space-y-5">
               <div>

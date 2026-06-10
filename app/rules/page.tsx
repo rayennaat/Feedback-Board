@@ -29,27 +29,27 @@ const rules = [
 
 export default function RulesPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
+    <main className="app-shell px-4 py-8 text-stone-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex items-center justify-between border-b border-slate-200 pb-4">
-          <Link href="/" className="text-sm font-semibold text-slate-700 hover:text-slate-950">Feedback TN</Link>
-          <Link href="/feedback?public=1" className="text-sm font-semibold text-blue-700 hover:text-blue-800">Browse posts</Link>
+        <header className="mb-8 flex items-center justify-between border-b border-stone-200/80 pb-4">
+          <Link href="/" className="text-sm font-semibold text-stone-700 hover:text-stone-950">Feedback TN</Link>
+          <Link href="/feedback?public=1" className="text-sm font-semibold text-teal-700 hover:text-teal-800">Browse posts</Link>
         </header>
 
         <section className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Trust and safety</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950">Community rules</h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">Feedback TN is for useful Tunisian experiences, questions, warnings, and recommendations. These rules help keep posts helpful, fair, and safe for the people reading and the people being discussed.</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Trust and safety</p>
+          <h1 className="mt-3 text-4xl font-bold tracking-tight text-stone-950">Community rules</h1>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-stone-600">Feedback TN is for useful Tunisian experiences, questions, warnings, and recommendations. These rules help keep posts helpful, fair, and safe for the people reading and the people being discussed.</p>
         </section>
 
         <div className="space-y-3">
           {rules.map((rule, index) => (
-            <section key={rule.title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <section key={rule.title} className="rounded-lg border border-stone-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
               <div className="flex gap-4">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-100 text-sm font-bold text-blue-800">{index + 1}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-teal-100 text-sm font-bold text-teal-800">{index + 1}</span>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-950">{rule.title}</h2>
-                  <p className="mt-2 leading-7 text-slate-600">{rule.body}</p>
+                  <h2 className="text-lg font-semibold text-stone-950">{rule.title}</h2>
+                  <p className="mt-2 leading-7 text-stone-600">{rule.body}</p>
                 </div>
               </div>
             </section>

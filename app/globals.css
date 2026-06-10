@@ -1,8 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f3ee;
+  --foreground: #171412;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #fffdf9;
+  --line: rgba(38, 32, 25, 0.11);
+  --muted: #706a60;
+  --brand: #0f766e;
+  --brand-strong: #115e59;
+  --brand-soft: #dff5ef;
+  --ink: #171412;
+  --gold: #b7791f;
+  --danger: #b42318;
+  --shadow-soft: 0 20px 60px rgba(37, 31, 24, 0.10);
+  --shadow-card: 0 10px 30px rgba(37, 31, 24, 0.08);
 }
 
 @theme inline {
@@ -12,35 +24,120 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
 }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.11), transparent 34%),
+    linear-gradient(315deg, rgba(183, 121, 31, 0.12), transparent 30%),
+    radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.95), transparent 34%),
+    #f6f3ee;
+}
+
+::selection { background: rgba(15, 118, 110, 0.22); }
+
+a, button, input, select, textarea {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 160ms;
+  transition-timing-function: ease;
+}
+
+button { cursor: pointer; }
+input, select, textarea { color: var(--ink); }
+
+.app-shell { min-height: 100vh; background: transparent; color: var(--ink); }
+.app-container { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
+
+.premium-nav,
+.premium-surface,
+.premium-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
+}
+
+.premium-nav { border-radius: 18px; }
+.premium-surface { border-radius: 18px; }
+.premium-card { border-radius: 14px; }
+.premium-card:hover { border-color: rgba(15, 118, 110, 0.24); box-shadow: var(--shadow-soft); }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0f766e, #0b5f59);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 14px 30px rgba(15, 118, 110, 0.24);
+}
+
+.btn-primary:hover { transform: translateY(-1px); background: linear-gradient(135deg, #118278, #0f766e); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.btn-secondary:hover { transform: translateY(-1px); border-color: rgba(15, 118, 110, 0.28); background: white; }
+
+.field {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(38, 32, 25, 0.14);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  outline: none;
+}
+
+.field:focus { border-color: rgba(15, 118, 110, 0.55); box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12); }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(38, 32, 25, 0.10);
+  background: rgba(255, 255, 255, 0.72);
+  color: #4c453d;
+  font-weight: 700;
+}
+
+.pill-accent { border-color: rgba(15, 118, 110, 0.18); background: var(--brand-soft); color: #0f5f59; }
+.eyebrow { color: var(--brand-strong); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.muted { color: var(--muted); }
+.text-balance { text-wrap: balance; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-/* styles/globals.css */
+.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
 :root {
-  --toastify-color-success: #4BB543;
-  --toastify-color-error: #FF3333;
+  --toastify-color-success: #0f766e;
+  --toastify-color-error: #b42318;
 }
 
 .Toastify__toast {
-  border-radius: 8px !important;
+  border-radius: 12px !important;
   font-family: inherit !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 16px 40px rgba(37, 31, 24, 0.16) !important;
 }

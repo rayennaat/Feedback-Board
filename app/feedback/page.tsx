@@ -602,139 +602,139 @@ export default function FeedbackPage() {
     <>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="category" className="mb-1 block text-sm font-medium text-slate-700">Category</label>
-          <select id="category" value={value.category} onChange={(e) => onChange({ ...value, category: e.target.value })} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          <label htmlFor="category" className="mb-1 block text-sm font-medium text-stone-700">Category</label>
+          <select id="category" value={value.category} onChange={(e) => onChange({ ...value, category: e.target.value })} className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-stone-700 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
             {TUNISIA_CATEGORIES.map(category => <option key={category}>{category}</option>)}
           </select>
         </div>
         <div>
-          <label htmlFor="experienceType" className="mb-1 block text-sm font-medium text-slate-700">Type</label>
-          <select id="experienceType" value={value.experienceType} onChange={(e) => onChange({ ...value, experienceType: e.target.value })} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          <label htmlFor="experienceType" className="mb-1 block text-sm font-medium text-stone-700">Type</label>
+          <select id="experienceType" value={value.experienceType} onChange={(e) => onChange({ ...value, experienceType: e.target.value })} className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-stone-700 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
             {EXPERIENCE_TYPES.map(type => <option key={type}>{type}</option>)}
           </select>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="city" className="mb-1 block text-sm font-medium text-slate-700">City</label>
-          <select id="city" value={value.city} onChange={(e) => onChange({ ...value, city: e.target.value })} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          <label htmlFor="city" className="mb-1 block text-sm font-medium text-stone-700">City</label>
+          <select id="city" value={value.city} onChange={(e) => onChange({ ...value, city: e.target.value })} className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-stone-700 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
             {TUNISIA_CITIES.map(city => <option key={city}>{city}</option>)}
           </select>
         </div>
         <div>
-          <label htmlFor="subject" className="mb-1 block text-sm font-medium text-slate-700">Company, shop, service, or topic</label>
-          <input type="text" id="subject" className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={value.subject} onChange={(e) => onChange({ ...value, subject: e.target.value })} placeholder="Example: Teleperformance, Jumia, delivery company" required />
+          <label htmlFor="subject" className="mb-1 block text-sm font-medium text-stone-700">Company, shop, service, or topic</label>
+          <input type="text" id="subject" className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-stone-700 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" value={value.subject} onChange={(e) => onChange({ ...value, subject: e.target.value })} placeholder="Example: Teleperformance, Jumia, delivery company" required />
         </div>
       </div>
       <div>
-        <label htmlFor="title" className="mb-1 block text-sm font-medium text-slate-700">Title</label>
-        <input type="text" id="title" className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} placeholder="Example: Is this call center good for students?" required />
+        <label htmlFor="title" className="mb-1 block text-sm font-medium text-stone-700">Title</label>
+        <input type="text" id="title" className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-stone-700 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} placeholder="Example: Is this call center good for students?" required />
       </div>
       <div>
-        <label htmlFor="message" className="mb-1 block text-sm font-medium text-slate-700">Details</label>
-        <textarea id="message" rows={5} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" value={value.message} onChange={(e) => onChange({ ...value, message: e.target.value })} placeholder="Share what happened, what you want to know, or what others should watch out for." required />
+        <label htmlFor="message" className="mb-1 block text-sm font-medium text-stone-700">Details</label>
+        <textarea id="message" rows={5} className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-stone-700 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" value={value.message} onChange={(e) => onChange({ ...value, message: e.target.value })} placeholder="Share what happened, what you want to know, or what others should watch out for." required />
       </div>
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-        <label className="mb-1 block text-sm font-medium text-slate-700">Proof image</label>
-        <p className="mb-3 text-xs leading-5 text-slate-500">Optional screenshot or photo. Blur private information before uploading. JPG, PNG, WebP, or GIF up to 5 MB.</p>
+      <div className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-3">
+        <label className="mb-1 block text-sm font-medium text-stone-700">Proof image</label>
+        <p className="mb-3 text-xs leading-5 text-stone-500">Optional screenshot or photo. Blur private information before uploading. JPG, PNG, WebP, or GIF up to 5 MB.</p>
         {value.proofImageUrl ? (
           <div className="space-y-3">
-            <Image src={value.proofImageUrl} alt="Uploaded proof preview" width={900} height={520} className="max-h-56 w-full rounded-md border border-slate-200 bg-white object-contain" />
-            <button type="button" onClick={() => onChange({ ...value, proofImageUrl: '' })} className="rounded-md bg-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-300">Remove image</button>
+            <Image src={value.proofImageUrl} alt="Uploaded proof preview" width={900} height={520} className="max-h-56 w-full rounded-xl border border-stone-200/80 bg-white object-contain" />
+            <button type="button" onClick={() => onChange({ ...value, proofImageUrl: '' })} className="rounded-xl bg-stone-200 px-3 py-1.5 text-sm font-semibold text-stone-800 hover:bg-stone-300">Remove image</button>
           </div>
         ) : (
-          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={proofUploadTarget !== null} onChange={(e) => handleProofImageUpload(e.target.files?.[0] || null, value === newFeedback ? 'new' : 'edit', value, onChange)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700" />
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={proofUploadTarget !== null} onChange={(e) => handleProofImageUpload(e.target.files?.[0] || null, value === newFeedback ? 'new' : 'edit', value, onChange)} className="w-full rounded-xl border border-stone-300/80 bg-white px-3 py-2 text-sm text-stone-700" />
         )}
-        {proofUploadTarget !== null && <p className="mt-2 text-xs font-medium text-blue-700">Uploading image...</p>}
+        {proofUploadTarget !== null && <p className="mt-2 text-xs font-medium text-teal-700">Uploading image...</p>}
       </div>
-      <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
-        <input type="checkbox" checked={value.isAnonymous} onChange={(e) => onChange({ ...value, isAnonymous: e.target.checked })} className="h-4 w-4 rounded border-slate-300" />
+      <label className="flex items-center gap-3 rounded-xl border border-stone-200/80 bg-stone-50/70 px-3 py-2 text-sm font-medium text-stone-700">
+        <input type="checkbox" checked={value.isAnonymous} onChange={(e) => onChange({ ...value, isAnonymous: e.target.checked })} className="h-4 w-4 rounded border-stone-300" />
         Post anonymously
       </label>
     </>
   )
 
   return (
-    <div className="min-h-screen bg-slate-50 py-6 px-4 text-slate-950 sm:px-6 lg:px-8">
+    <div className="app-shell px-4 py-6 text-stone-950 sm:px-6 lg:px-8">
       <Toaster position="top-right" />
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:flex sm:items-start sm:justify-between sm:gap-6">
+      <div className="app-container">
+        <div className="premium-surface mb-8 p-6 sm:flex sm:items-start sm:justify-between sm:gap-6">
           <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Feedback TN</h1>
-            <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">Share reviews, warnings, questions, and recommendations from real experiences in Tunisia.</p>
+            <h1 className="text-3xl font-black tracking-tight text-stone-950">Feedback TN</h1>
+            <p className="mt-2 max-w-2xl text-base leading-7 text-stone-600">Share reviews, warnings, questions, and recommendations from real experiences in Tunisia.</p>
           </div>
           {activeUser ? (
             <div className="mt-4 flex items-center justify-center gap-2 sm:mt-0">
               <div className="relative">
-                <button onClick={openNotifications} title="Notifications" className="relative rounded-md border border-slate-300 bg-white p-2 text-slate-700 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-950">
+                <button onClick={openNotifications} title="Notifications" className="relative btn-secondary p-2 text-stone-700">
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{unreadCount}</span>}
                 </button>
                 {showNotifications && (
-                  <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-xl">
-                    <h3 className="text-sm font-semibold text-slate-950">Notifications</h3>
+                  <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-stone-200/80 bg-white p-3 text-left shadow-xl">
+                    <h3 className="text-sm font-semibold text-stone-950">Notifications</h3>
                     <div className="mt-2 max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <p className="py-3 text-sm text-slate-500">No notifications yet.</p>
+                        <p className="py-3 text-sm text-stone-500">No notifications yet.</p>
                       ) : notifications.map(notification => (
-                        <Link key={notification.id} href={notification.link} className="block rounded-md px-2 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                          <span className="block font-medium text-slate-900">{notification.message}</span>
-                          <span className="text-xs text-slate-500">{new Date(notification.date).toLocaleDateString()}</span>
+                        <Link key={notification.id} href={notification.link} className="block rounded-xl px-2 py-2 text-sm text-stone-700 hover:bg-stone-50/70">
+                          <span className="block font-medium text-stone-900">{notification.message}</span>
+                          <span className="text-xs text-stone-500">{new Date(notification.date).toLocaleDateString()}</span>
                         </Link>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
-              <Link href={`/user/${slugify(activeUser.username)}`} title="Profile" className="rounded-md border border-slate-300 bg-white p-2 text-slate-700 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-950">
+              <Link href={`/user/${slugify(activeUser.username)}`} title="Profile" className="btn-secondary p-2 text-stone-700">
                 <UserCircle className="h-5 w-5" />
               </Link>
-              <button onClick={handleLogout} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100">Logout</button>
+              <button onClick={handleLogout} className="btn-secondary px-4 py-2 text-sm">Logout</button>
             </div>
           ) : (
             <div className="mt-4 flex justify-center gap-2 sm:mt-0">
-              <Link href="/login" className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100">Log in</Link>
-              <Link href="/signup" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">Sign up</Link>
+              <Link href="/login" className="btn-secondary px-4 py-2 text-sm">Log in</Link>
+              <Link href="/signup" className="btn-primary px-4 py-2 text-sm">Sign up</Link>
             </div>
           )}
         </div>
 
         <div className="mb-6 flex justify-end">
           {activeUser ? (
-            <button onClick={() => setShowFeedbackForm(!showFeedbackForm)} className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">{showFeedbackForm ? 'Cancel' : 'Share Experience'}</button>
+            <button onClick={() => setShowFeedbackForm(!showFeedbackForm)} className="btn-primary px-5 py-2.5 text-sm">{showFeedbackForm ? 'Cancel' : 'Share Experience'}</button>
           ) : (
-            <Link href="/login" className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700">Log in to share</Link>
+            <Link href="/login" className="btn-primary px-5 py-2.5 text-sm">Log in to share</Link>
           )}
         </div>
 
         {showFeedbackForm && (
-          <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm animate-fade-in">
-            <h2 className="mb-2 text-xl font-semibold text-slate-950">Create a Post</h2>
-            <p className="mb-4 text-sm text-slate-600">Share your experience in {SUPPORTED_LANGUAGE_LABELS.join(', ')}.</p>
+          <div className="premium-surface mb-8 p-6 animate-fade-in">
+            <h2 className="mb-2 text-xl font-semibold text-stone-950">Create a Post</h2>
+            <p className="mb-4 text-sm text-stone-600">Share your experience in {SUPPORTED_LANGUAGE_LABELS.join(', ')}.</p>
             <form onSubmit={handleSubmit} className="space-y-4">
               {renderPostFields(newFeedback, setNewFeedback)}
-              <button type="submit" className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit for Review</button>
+              <button type="submit" className="w-full rounded-xl bg-teal-700 px-4 py-2 text-white hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2">Submit for Review</button>
             </form>
           </div>
         )}
 
-        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="premium-surface mb-6 p-4">
           <div className="grid gap-3 lg:grid-cols-[1.2fr_0.9fr_auto_auto_auto_auto]">
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search: Teleperformance Sousse, Jumia delivery..." className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-            <input type="text" value={subjectQuery} onChange={(e) => setSubjectQuery(e.target.value)} placeholder="Company/service" className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-            <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search: Teleperformance Sousse, Jumia delivery..." className="rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-950 placeholder:text-stone-500 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" />
+            <input type="text" value={subjectQuery} onChange={(e) => setSubjectQuery(e.target.value)} placeholder="Company/service" className="rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-950 placeholder:text-stone-500 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" />
+            <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
               <option value="all">All cities</option>
               {TUNISIA_CITIES.map(city => <option key={city}>{city}</option>)}
             </select>
-            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
               <option value="all">All categories</option>
               {TUNISIA_CATEGORIES.map(category => <option key={category}>{category}</option>)}
             </select>
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
               <option value="all">All types</option>
               {EXPERIENCE_TYPES.map(type => <option key={type}>{type}</option>)}
             </select>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
               <option value="latest">Latest</option>
               <option value="most-liked">Most liked</option>
               <option value="most-discussed">Most discussed</option>
@@ -742,28 +742,28 @@ export default function FeedbackPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 bg-slate-50/70 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
-            <h2 className="text-lg font-semibold text-slate-950">{viewMode === 'mine' ? 'My Posts' : viewMode === 'saved' ? 'Saved Posts' : 'Latest Experiences'}</h2>
+        <div className="premium-surface overflow-hidden">
+          <div className="border-b border-stone-200/70 bg-white/45 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+            <h2 className="text-lg font-black text-stone-950">{viewMode === 'mine' ? 'My Posts' : viewMode === 'saved' ? 'Saved Posts' : 'Latest Experiences'}</h2>
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => handleViewChange('all')} className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'all' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>Latest Experiences</button>
-              <button onClick={() => handleViewChange('mine')} className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'mine' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>My Posts</button>
-              <button onClick={() => handleViewChange('saved')} className={`rounded-md px-3 py-1.5 text-sm font-medium ${viewMode === 'saved' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}`}>Saved Posts</button>
+              <button onClick={() => handleViewChange('all')} className={`rounded-xl px-3 py-1.5 text-sm font-medium ${viewMode === 'all' ? 'bg-teal-100 text-teal-800' : 'bg-white/70 text-stone-700 hover:bg-white'}`}>Latest Experiences</button>
+              <button onClick={() => handleViewChange('mine')} className={`rounded-xl px-3 py-1.5 text-sm font-medium ${viewMode === 'mine' ? 'bg-teal-100 text-teal-800' : 'bg-white/70 text-stone-700 hover:bg-white'}`}>My Posts</button>
+              <button onClick={() => handleViewChange('saved')} className={`rounded-xl px-3 py-1.5 text-sm font-medium ${viewMode === 'saved' ? 'bg-teal-100 text-teal-800' : 'bg-white/70 text-stone-700 hover:bg-white'}`}>Saved Posts</button>
             </div>
           </div>
 
           {loading ? (
-            <div className="p-6 text-center text-slate-500">Loading posts...</div>
+            <div className="p-6 text-center text-stone-500">Loading posts...</div>
           ) : errorMessage ? (
             <div className="p-6 text-center">
               <p className="font-medium text-red-600">Could not load posts</p>
-              <p className="mt-1 text-sm text-slate-600">{errorMessage}</p>
-              <button onClick={() => fetchFeedback(viewMode)} className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">Try Again</button>
+              <p className="mt-1 text-sm text-stone-600">{errorMessage}</p>
+              <button onClick={() => fetchFeedback(viewMode)} className="mt-4 rounded-xl bg-teal-700 px-4 py-2 text-white transition-colors hover:bg-teal-800">Try Again</button>
             </div>
           ) : sortedFeedback.length === 0 ? (
-            <div className="p-6 text-center text-slate-500">{viewMode === 'mine' ? 'You have not shared any posts yet.' : viewMode === 'saved' ? 'No saved posts yet.' : 'No posts match these filters yet.'}</div>
+            <div className="p-6 text-center text-stone-500">{viewMode === 'mine' ? 'You have not shared any posts yet.' : viewMode === 'saved' ? 'No saved posts yet.' : 'No posts match these filters yet.'}</div>
           ) : (
-            <ul className="divide-y divide-slate-200">
+            <ul className="divide-y divide-stone-200/70">
               {paginatedFeedback.map((item) => {
                 const isEditing = editingFeedbackId === item.id
                 const isCommentsOpen = openCommentsPostId === item.id
@@ -779,16 +779,16 @@ export default function FeedbackPage() {
                   const childReplies = repliesByParent[comment.id] || []
 
                   return (
-                    <div key={comment.id} className={depth > 0 ? 'ml-4 border-l border-slate-200 pl-4 sm:ml-6' : ''}>
-                      <div className="rounded-md bg-white p-3 shadow-sm">
+                    <div key={comment.id} className={depth > 0 ? 'ml-4 border-l border-stone-200/80 pl-4 sm:ml-6' : ''}>
+                      <div className="rounded-xl bg-white p-3 shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <p className="text-sm text-slate-700">{comment.message}</p>
-                            <p className="mt-1 text-xs text-slate-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
+                            <p className="text-sm text-stone-700">{comment.message}</p>
+                            <p className="mt-1 text-xs text-stone-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
                           </div>
                           <div className="flex gap-2 text-xs font-medium">
-                            <button onClick={() => setReplyTargetsByPost(prev => ({ ...prev, [item.id]: comment }))} className="text-blue-600 hover:text-blue-800">Reply</button>
-                            <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-slate-500 hover:text-slate-950">Report</button>
+                            <button onClick={() => setReplyTargetsByPost(prev => ({ ...prev, [item.id]: comment }))} className="text-teal-700 hover:text-teal-800">Reply</button>
+                            <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-stone-500 hover:text-stone-950">Report</button>
                             {comment.isCurrentUser && <button onClick={() => handleDeleteComment(item.id, comment.id)} className="text-red-600 hover:text-red-800">Delete</button>}
                           </div>
                         </div>
@@ -799,13 +799,13 @@ export default function FeedbackPage() {
                 }
 
                 return (
-                  <li key={item.id} className="p-5 transition-colors hover:bg-slate-50">
+                  <li key={item.id} className="p-5 transition-colors hover:bg-white/45">
                     {isEditing ? (
                       <div className="space-y-4">
                         {renderPostFields(editFeedback, setEditFeedback)}
                         <div className="flex gap-2">
-                          <button onClick={() => handleUpdateFeedback(item.id)} className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700">Save</button>
-                          <button onClick={handleCancelEdit} className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-200">Cancel</button>
+                          <button onClick={() => handleUpdateFeedback(item.id)} className="rounded-xl bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800">Save</button>
+                          <button onClick={handleCancelEdit} className="rounded-xl bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-800 hover:bg-stone-200">Cancel</button>
                         </div>
                       </div>
                     ) : (
@@ -813,63 +813,63 @@ export default function FeedbackPage() {
                         <div className="flex justify-between gap-4">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{item.category}</span>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{item.experienceType}</span>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{item.city}</span>
+                              <span className="pill pill-accent px-2.5 py-1 text-xs">{item.category}</span>
+                              <span className="pill px-2.5 py-1 text-xs">{item.experienceType}</span>
+                              <span className="pill px-2.5 py-1 text-xs">{item.city}</span>
                               {viewMode === 'mine' && <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getStatusClass(item.status)}`}>{item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span>}
                             </div>
-                            <Link href={`/post/${item.id}`} className="mt-3 block text-lg font-semibold text-slate-950 hover:text-blue-700">{item.title}</Link>
-                            <p className="mt-1 text-sm font-medium text-slate-500">About <Link href={`/company/${slugify(item.subject)}`} className="text-blue-700 hover:text-blue-800">{item.subject}</Link></p>
-                            <p className="mt-2 text-slate-600">{item.message}</p>
-                            {item.proofImageUrl && <Image src={item.proofImageUrl} alt="Proof attached to this post" width={900} height={520} className="mt-3 max-h-72 w-full rounded-md border border-slate-200 bg-white object-contain" />}
+                            <Link href={`/post/${item.id}`} className="mt-3 block text-lg font-black text-stone-950 hover:text-teal-700">{item.title}</Link>
+                            <p className="mt-1 text-sm font-medium text-stone-500">About <Link href={`/company/${slugify(item.subject)}`} className="text-teal-700 hover:text-teal-800">{item.subject}</Link></p>
+                            <p className="mt-2 text-stone-600">{item.message}</p>
+                            {item.proofImageUrl && <Image src={item.proofImageUrl} alt="Proof attached to this post" width={900} height={520} className="mt-3 max-h-72 w-full rounded-xl border border-stone-200/80 bg-white object-contain" />}
                           </div>
                           {item.status === 'approved' && (
-                            <button onClick={() => handleLike(item.id)} className={`flex items-center gap-1 self-start transition-all duration-200 ${item.isLiked ? 'scale-110 text-blue-600' : 'text-slate-500 hover:text-blue-500'}`}>
+                            <button onClick={() => handleLike(item.id)} className={`flex items-center gap-1 self-start transition-all duration-200 ${item.isLiked ? 'scale-110 text-teal-700' : 'text-stone-500 hover:text-teal-600'}`}>
                               <span>{item.isLiked ? 'Liked' : 'Like'}</span>
                               <span>{item.likes}</span>
                             </button>
                           )}
                         </div>
-                        <div className="mt-3 flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mt-3 flex flex-col gap-2 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex flex-wrap gap-x-4 gap-y-1">
-                            {item.isAnonymous ? <span>By Anonymous</span> : <span>By <Link href={`/user/${slugify(item.user)}`} className="font-medium text-blue-700 hover:text-blue-800">{item.user}</Link></span>}
+                            {item.isAnonymous ? <span>By Anonymous</span> : <span>By <Link href={`/user/${slugify(item.user)}`} className="font-medium text-teal-700 hover:text-teal-800">{item.user}</Link></span>}
                             <span>{new Date(item.date).toLocaleDateString()}</span>
                             {item.isAnonymous && <span>Anonymous post</span>}
                           </div>
                           <div className="flex flex-wrap gap-3">
-                            {item.status === 'approved' && <button onClick={() => handleSave(item.id)} className={`inline-flex items-center gap-1 font-medium ${item.isSaved ? 'text-blue-700' : 'text-slate-600 hover:text-blue-700'}`}>{item.isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}{item.isSaved ? 'Saved' : 'Save'}</button>}
-                            {item.status === 'approved' && <Link href={`/post/${item.id}`} className="font-medium text-blue-600 hover:text-blue-800">View post</Link>}
-                            {item.status === 'approved' && <button onClick={() => toggleComments(item.id)} className="font-medium text-blue-600 hover:text-blue-800">{isCommentsOpen ? 'Hide replies' : `${item.commentsCount} replies`}</button>}
-                            {item.status === 'approved' && <button onClick={() => openReport({ type: 'feedback', id: item.id })} className="font-medium text-slate-600 hover:text-slate-950">Report</button>}
-                            {viewMode === 'mine' && item.status === 'pending' && <button onClick={() => handleStartEdit(item)} className="font-medium text-blue-600 hover:text-blue-800">Edit</button>}
+                            {item.status === 'approved' && <button onClick={() => handleSave(item.id)} className={`inline-flex items-center gap-1 font-medium ${item.isSaved ? 'text-teal-700' : 'text-stone-600 hover:text-teal-700'}`}>{item.isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}{item.isSaved ? 'Saved' : 'Save'}</button>}
+                            {item.status === 'approved' && <Link href={`/post/${item.id}`} className="font-medium text-teal-700 hover:text-teal-800">View post</Link>}
+                            {item.status === 'approved' && <button onClick={() => toggleComments(item.id)} className="font-medium text-teal-700 hover:text-teal-800">{isCommentsOpen ? 'Hide replies' : `${item.commentsCount} replies`}</button>}
+                            {item.status === 'approved' && <button onClick={() => openReport({ type: 'feedback', id: item.id })} className="font-medium text-stone-600 hover:text-stone-950">Report</button>}
+                            {viewMode === 'mine' && item.status === 'pending' && <button onClick={() => handleStartEdit(item)} className="font-medium text-teal-700 hover:text-teal-800">Edit</button>}
                             {viewMode === 'mine' && item.status === 'pending' && <button onClick={() => handleDeleteFeedback(item.id)} className="font-medium text-red-600 hover:text-red-800">Delete</button>}
                           </div>
                         </div>
 
                         {isCommentsOpen && (
-                          <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4">
+                          <div className="mt-5 rounded-xl border border-stone-200/80 bg-stone-50/70 p-4">
                             <div className="space-y-3">
                               {comments.length === 0 ? (
-                                <p className="text-sm text-slate-500">No replies yet.</p>
+                                <p className="text-sm text-stone-500">No replies yet.</p>
                               ) : topLevelComments.map(comment => renderComment(comment))}
                             </div>
                             <div className="mt-4 space-y-2">
                               {replyTarget && (
-                                <div className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                                <div className="flex items-center justify-between rounded-xl border border-teal-100 bg-teal-50 px-3 py-2 text-sm text-teal-900">
                                   <span>Replying to {replyTarget.user}</span>
-                                  <button onClick={() => setReplyTargetsByPost(prev => ({ ...prev, [item.id]: null }))} className="font-semibold hover:text-blue-700">Cancel</button>
+                                  <button onClick={() => setReplyTargetsByPost(prev => ({ ...prev, [item.id]: null }))} className="font-semibold hover:text-teal-700">Cancel</button>
                                 </div>
                               )}
-                              <textarea value={commentDrafts[item.id] || ''} onChange={(e) => setCommentDrafts(prev => ({ ...prev, [item.id]: e.target.value }))} rows={3} placeholder={replyTarget ? `Reply to ${replyTarget.user}...` : 'Reply with your experience or advice...'} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                              <textarea value={commentDrafts[item.id] || ''} onChange={(e) => setCommentDrafts(prev => ({ ...prev, [item.id]: e.target.value }))} rows={3} placeholder={replyTarget ? `Reply to ${replyTarget.user}...` : 'Reply with your experience or advice...'} className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-700 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" />
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                <label className="flex items-center gap-2 text-sm text-slate-600">
+                                <label className="flex items-center gap-2 text-sm text-stone-600">
                                   <input type="checkbox" checked={Boolean(anonymousCommentDrafts[item.id])} onChange={(e) => setAnonymousCommentDrafts(prev => ({ ...prev, [item.id]: e.target.checked }))} />
                                   Reply anonymously
                                 </label>
                                 {activeUser ? (
-                                  <button onClick={() => handleAddComment(item.id, replyTarget?.id)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">{replyTarget ? 'Reply' : 'Add Reply'}</button>
+                                  <button onClick={() => handleAddComment(item.id, replyTarget?.id)} className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">{replyTarget ? 'Reply' : 'Add Reply'}</button>
                                 ) : (
-                                  <Link href="/login" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Log in to reply</Link>
+                                  <Link href="/login" className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">Log in to reply</Link>
                                 )}
                               </div>
                             </div>
@@ -884,10 +884,10 @@ export default function FeedbackPage() {
           )}
 
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 border-t border-slate-200 p-4">
+            <div className="flex justify-center gap-2 border-t border-stone-200/80 p-4">
               {Array.from({ length: totalPages }, (_, index) => {
                 const pageNumber = index + 1
-                return <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={currentPage === pageNumber ? 'rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors' : 'rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200'}>{pageNumber}</button>
+                return <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={currentPage === pageNumber ? 'rounded-xl bg-teal-700 px-3 py-1.5 text-sm font-medium text-white transition-colors' : 'rounded-xl bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-800 transition-colors hover:bg-stone-200'}>{pageNumber}</button>
               })}
             </div>
           )}
@@ -895,24 +895,24 @@ export default function FeedbackPage() {
       </div>
 
       {reportingTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/40 px-4">
           <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-            <h2 className="text-lg font-semibold text-slate-950">Report content</h2>
+            <h2 className="text-lg font-black text-stone-950">Report content</h2>
             <div className="mt-4 space-y-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Reason</label>
-                <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                <label className="mb-1 block text-sm font-medium text-stone-700">Reason</label>
+                <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
                   {REPORT_REASONS.map(reason => <option key={reason}>{reason}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Details</label>
-                <textarea value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} rows={4} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" placeholder="Add context for the moderator." />
+                <label className="mb-1 block text-sm font-medium text-stone-700">Details</label>
+                <textarea value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} rows={4} className="w-full rounded-xl border border-stone-300/80 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" placeholder="Add context for the moderator." />
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setReportingTarget(null)} className="rounded-md bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-200">Cancel</button>
-              <button onClick={handleSubmitReport} className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Submit Report</button>
+              <button onClick={() => setReportingTarget(null)} className="rounded-xl bg-stone-100 px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-200">Cancel</button>
+              <button onClick={handleSubmitReport} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Submit Report</button>
             </div>
           </div>
         </div>

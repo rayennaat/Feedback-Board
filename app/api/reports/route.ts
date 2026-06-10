@@ -1,36 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET!
-
-interface JwtPayload {
-  id: number
-  username: string
-}
+import { requireActiveUser, requireAdmin } from '@/lib/security'
 
 const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
 
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get('authToken')?.value
+  const auth = await requireActiveUser(req)
+  if (!auth.ok) return auth.response
 
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  let reporterId: number
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
-    reporterId = decoded.id
-  } catch (err) {
-    console.error('Token error:', err)
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-  }
-
-  const user = await prisma.user.findUnique({ where: { id: reporterId } })
-  if (user?.isSuspended) {
-    return NextResponse.json({ error: 'Account suspended' }, { status: 403 })
-  }
+  const reporterId = auth.user.id
 
   const body = await req.json()
   const targetType = body.targetType
@@ -44,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   if (targetType === 'feedback') {
     const feedback = await prisma.feedback.findUnique({ where: { id: targetId } })
-    if (!feedback) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    if (!feedback || feedback.status !== 'approved') return NextResponse.json({ error: 'Post not found' }, { status: 404 })
 
     const report = await prisma.report.create({
       data: {
@@ -59,7 +37,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: report.id, message: 'Report submitted' })
   }
 
-  const comment = await prisma.comment.findUnique({ where: { id: targetId } })
+  const comment = await prisma.comment.findFirst({
+    where: { id: targetId, isHidden: false, feedback: { status: 'approved' } }
+  })
   if (!comment) return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
 
   const report = await prisma.report.create({
@@ -76,20 +56,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const token = req.cookies.get('authToken')?.value
-
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } })
-
-    if (!user?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const reports = await prisma.report.findMany({
       orderBy: { date: 'desc' },
       include: {

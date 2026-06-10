@@ -1,32 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET!
-
-interface JwtPayload {
-  id: number
-  username: string
-}
+import { requireAdmin } from '@/lib/security'
 
 export async function GET(req: NextRequest) {
-  const token = req.cookies.get('authToken')?.value
-
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id }
-    })
-
-    if (!user?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const feedback = await prisma.feedback.findMany({
       orderBy: { date: 'desc' },
       include: {
@@ -71,9 +51,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(formatted)
   } catch (err) {
     console.error('Admin fetch error:', err)
-    return NextResponse.json(
-      { error: 'Failed to fetch posts' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 })
   }
 }

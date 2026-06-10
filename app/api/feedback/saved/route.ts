@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET!
-
-interface JwtPayload { id: number; username: string }
+import { requireUser } from '@/lib/security'
 
 export async function GET(req: NextRequest) {
-  const token = req.cookies.get('authToken')?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireUser(req)
+  if (!auth.ok) return auth.response
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { id: auth.user.id },
       include: {
         saved: {
           where: { status: 'approved' },
@@ -45,9 +40,9 @@ export async function GET(req: NextRequest) {
       date: item.date.toISOString(),
       user: item.isAnonymous ? 'Anonymous' : item.user.username,
       userId: item.user.id,
-      isCurrentUser: decoded.id === item.user.id,
-      likedByCurrentUser: item.likedBy.some(user => user.id === decoded.id),
-      savedByCurrentUser: item.savedBy.some(user => user.id === decoded.id)
+      isCurrentUser: auth.user.id === item.user.id,
+      likedByCurrentUser: item.likedBy.some(user => user.id === auth.user.id),
+      savedByCurrentUser: item.savedBy.some(user => user.id === auth.user.id)
     })))
   } catch (err) {
     console.error('Fetch saved posts error:', err)

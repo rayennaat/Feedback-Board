@@ -78,7 +78,7 @@ const statusClass = (status: PostStatus | ReportStatus) => {
   if (status === 'approved' || status === 'reviewed') return 'bg-green-100 text-green-800'
   if (status === 'pending' || status === 'open') return 'bg-yellow-100 text-yellow-800'
   if (status === 'rejected') return 'bg-red-100 text-red-800'
-  return 'bg-slate-100 text-slate-700'
+  return 'bg-stone-100 text-stone-700'
 }
 
 export default function DashboardPage() {
@@ -309,38 +309,38 @@ export default function DashboardPage() {
   const suspendedCount = users.filter(user => user.isSuspended).length
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-slate-50"><div className="text-xl font-medium text-slate-700">Loading...</div></div>
+    return <div className="flex min-h-screen items-center justify-center bg-transparent"><div className="text-xl font-medium text-stone-700">Loading...</div></div>
   }
 
   if (error) {
-    return <div className="flex min-h-screen items-center justify-center bg-slate-50"><div className="text-xl font-medium text-red-600">Error: {error}</div></div>
+    return <div className="flex min-h-screen items-center justify-center bg-transparent"><div className="text-xl font-medium text-red-600">Error: {error}</div></div>
   }
 
   const renderPostRow = (post: Post) => (
-    <tr key={`post-${post.id}`} className="hover:bg-slate-50">
+    <tr key={`post-${post.id}`} className="hover:bg-white/55">
       <td className="whitespace-nowrap px-5 py-4"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusClass(post.status)}`}>{post.status}</span></td>
       <td className="px-5 py-4">
-        <div className="text-sm font-semibold text-slate-950">{post.title}</div>
-        <div className="mt-1 max-w-sm text-sm text-slate-500 line-clamp-2">{post.message}</div>
-        {post.proofImageUrl && <a href={post.proofImageUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-800">View proof image</a>}
-        <div className="mt-2 text-xs font-medium text-slate-500">{post.experienceType} / {post.city}</div>
+        <div className="text-sm font-semibold text-stone-950">{post.title}</div>
+        <div className="mt-1 max-w-sm text-sm text-stone-500 line-clamp-2">{post.message}</div>
+        {post.proofImageUrl && <a href={post.proofImageUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-teal-700 hover:text-teal-800">View proof image</a>}
+        <div className="mt-2 text-xs font-medium text-stone-500">{post.experienceType} / {post.city}</div>
       </td>
-      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{post.subject}</td>
-      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{post.category}</td>
-      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-stone-600">{post.subject}</td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-stone-600">{post.category}</td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-stone-600">
         <div>{post.user}{post.isAnonymous ? ' (public anonymous)' : ''}</div>
-        {post.isAnonymous && <div className="text-xs text-slate-500">Admin: {post.authorUsername}</div>}
+        {post.isAnonymous && <div className="text-xs text-stone-500">Admin: {post.authorUsername}</div>}
       </td>
-      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-stone-600">
         <div>{post.likes} likes / {post.commentsCount} replies / {post.reportsCount} reports</div>
         {post.moderationReason && <div className="mt-1 max-w-xs text-xs text-red-700">Reason: {post.moderationReason}</div>}
-        {post.adminNote && <div className="mt-1 max-w-xs text-xs text-slate-500">Note: {post.adminNote}</div>}
+        {post.adminNote && <div className="mt-1 max-w-xs text-xs text-stone-500">Note: {post.adminNote}</div>}
       </td>
       <td className="px-5 py-4 text-sm font-medium">
         <div className="flex flex-wrap gap-2">
           {post.status !== 'approved' && <button onClick={() => updatePostStatus(post.id, 'approved')} className="rounded-md bg-green-100 px-3 py-1.5 text-green-800 hover:bg-green-200">Approve</button>}
           {post.status !== 'rejected' && <button onClick={() => updatePostStatus(post.id, 'rejected')} className="rounded-md bg-yellow-100 px-3 py-1.5 text-yellow-900 hover:bg-yellow-200">Hide</button>}
-          {post.status !== 'pending' && <button onClick={() => updatePostStatus(post.id, 'pending')} className="rounded-md bg-slate-100 px-3 py-1.5 text-slate-800 hover:bg-slate-200">Move pending</button>}
+          {post.status !== 'pending' && <button onClick={() => updatePostStatus(post.id, 'pending')} className="rounded-md bg-stone-100 px-3 py-1.5 text-stone-800 hover:bg-stone-200">Move pending</button>}
           <button onClick={() => deletePost(post.id)} className="rounded-md bg-red-100 px-3 py-1.5 text-red-800 hover:bg-red-200">Delete</button>
         </div>
       </td>
@@ -359,17 +359,17 @@ export default function DashboardPage() {
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusClass(report.status)}`}>{report.status}</span>
               <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">reported comment</span>
-              {post && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{post.category}</span>}
+              {post && <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-800">{post.category}</span>}
             </div>
-            <h3 className="mt-3 text-base font-semibold text-slate-950">{report.reason}</h3>
-            {report.details && <p className="mt-1 text-sm text-slate-600">{report.details}</p>}
-            <p className="mt-2 text-sm text-slate-500">Reported by {report.reporter} on {new Date(report.date).toLocaleDateString()}</p>
-            <p className="mt-2 text-sm text-slate-700">Comment by {comment.authorUsername}: {comment.message}</p>
-            {post && <p className="mt-2 text-sm text-slate-600">On post: {post.title} / {post.subject} / {post.status}</p>}
+            <h3 className="mt-3 text-base font-semibold text-stone-950">{report.reason}</h3>
+            {report.details && <p className="mt-1 text-sm text-stone-600">{report.details}</p>}
+            <p className="mt-2 text-sm text-stone-500">Reported by {report.reporter} on {new Date(report.date).toLocaleDateString()}</p>
+            <p className="mt-2 text-sm text-stone-700">Comment by {comment.authorUsername}: {comment.message}</p>
+            {post && <p className="mt-2 text-sm text-stone-600">On post: {post.title} / {post.subject} / {post.status}</p>}
           </div>
           <div className="flex flex-wrap gap-2 text-sm font-medium">
             {report.status !== 'reviewed' && <button onClick={() => updateReportStatus(report.id, 'reviewed')} className="rounded-md bg-green-100 px-3 py-1.5 text-green-800 hover:bg-green-200">Mark reviewed</button>}
-            {report.status !== 'dismissed' && <button onClick={() => updateReportStatus(report.id, 'dismissed')} className="rounded-md bg-slate-100 px-3 py-1.5 text-slate-800 hover:bg-slate-200">Dismiss</button>}
+            {report.status !== 'dismissed' && <button onClick={() => updateReportStatus(report.id, 'dismissed')} className="rounded-md bg-stone-100 px-3 py-1.5 text-stone-800 hover:bg-stone-200">Dismiss</button>}
             <button onClick={() => deleteComment(comment.id)} className="rounded-md bg-red-100 px-3 py-1.5 text-red-800 hover:bg-red-200">Delete comment</button>
           </div>
         </div>
@@ -378,16 +378,16 @@ export default function DashboardPage() {
   }
 
   const renderUserRow = (user: AdminUser) => (
-    <tr key={`user-${user.id}`} className="hover:bg-slate-50">
+    <tr key={`user-${user.id}`} className="hover:bg-white/55">
       <td className="px-5 py-4">
-        <div className="text-sm font-semibold text-slate-950">{user.username}</div>
-        <div className="text-sm text-slate-500">{user.email}</div>
+        <div className="text-sm font-semibold text-stone-950">{user.username}</div>
+        <div className="text-sm text-stone-500">{user.email}</div>
       </td>
-      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{new Date(user.createdAt).toLocaleDateString()}</td>
-      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{user.postsCount} posts / {user.commentsCount} comments / {user.reportsCount} reports</td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-stone-600">{new Date(user.createdAt).toLocaleDateString()}</td>
+      <td className="whitespace-nowrap px-5 py-4 text-sm text-stone-600">{user.postsCount} posts / {user.commentsCount} comments / {user.reportsCount} reports</td>
       <td className="whitespace-nowrap px-5 py-4">
         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${user.isSuspended ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{user.isSuspended ? 'suspended' : 'active'}</span>
-        {user.isAdmin && <span className="ml-2 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">admin</span>}
+        {user.isAdmin && <span className="ml-2 inline-flex rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-800">admin</span>}
       </td>
       <td className="px-5 py-4 text-sm font-medium">
         {!user.isAdmin && <button onClick={() => toggleUserSuspension(user.id, !user.isSuspended)} className={user.isSuspended ? 'rounded-md bg-green-100 px-3 py-1.5 text-green-800 hover:bg-green-200' : 'rounded-md bg-orange-100 px-3 py-1.5 text-orange-900 hover:bg-orange-200'}>{user.isSuspended ? 'Unsuspend' : 'Suspend'}</button>}
@@ -396,41 +396,41 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
+    <div className="app-shell px-4 py-6 text-stone-950 sm:px-6 lg:px-8">
       <Toaster position="top-right" />
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-stone-200/80 bg-white p-6 shadow-[0_8px_24px_rgba(37,31,24,0.06)] sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Admin Dashboard</h1>
-            <p className="mt-1 text-slate-600">Posts, reported comments, and users are managed separately.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-stone-950">Admin Dashboard</h1>
+            <p className="mt-1 text-stone-600">Posts, reported comments, and users are managed separately.</p>
           </div>
-          <button onClick={handleLogout} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100">Logout</button>
+          <button onClick={handleLogout} className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 shadow-[0_8px_24px_rgba(37,31,24,0.06)] hover:bg-stone-100">Logout</button>
         </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-5">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Pending Posts</h3><p className="text-2xl font-semibold text-yellow-600">{pendingCount}</p></div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Approved Posts</h3><p className="text-2xl font-semibold text-green-600">{approvedCount}</p></div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Reported Posts</h3><p className="text-2xl font-semibold text-red-600">{reportedPostCount}</p></div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Reported Comments</h3><p className="text-2xl font-semibold text-red-600">{reportedCommentCount}</p></div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Suspended Users</h3><p className="text-2xl font-semibold text-slate-950">{suspendedCount}</p></div>
+          <div className="rounded-lg border border-stone-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(37,31,24,0.06)]"><h3 className="text-sm font-medium text-stone-500">Pending Posts</h3><p className="text-2xl font-semibold text-yellow-600">{pendingCount}</p></div>
+          <div className="rounded-lg border border-stone-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(37,31,24,0.06)]"><h3 className="text-sm font-medium text-stone-500">Approved Posts</h3><p className="text-2xl font-semibold text-green-600">{approvedCount}</p></div>
+          <div className="rounded-lg border border-stone-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(37,31,24,0.06)]"><h3 className="text-sm font-medium text-stone-500">Reported Posts</h3><p className="text-2xl font-semibold text-red-600">{reportedPostCount}</p></div>
+          <div className="rounded-lg border border-stone-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(37,31,24,0.06)]"><h3 className="text-sm font-medium text-stone-500">Reported Comments</h3><p className="text-2xl font-semibold text-red-600">{reportedCommentCount}</p></div>
+          <div className="rounded-lg border border-stone-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(37,31,24,0.06)]"><h3 className="text-sm font-medium text-stone-500">Suspended Users</h3><p className="text-2xl font-semibold text-stone-950">{suspendedCount}</p></div>
         </div>
 
-        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-6 rounded-lg border border-stone-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap gap-2">
               {(['posts', 'comments', 'users'] as Section[]).map(item => (
-                <button key={item} onClick={() => setSection(item)} className={`rounded-md px-4 py-2 text-sm font-semibold capitalize ${section === item ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>{item}</button>
+                <button key={item} onClick={() => setSection(item)} className={`rounded-md px-4 py-2 text-sm font-semibold capitalize ${section === item ? 'bg-teal-700 text-white' : 'bg-stone-100 text-stone-800 hover:bg-stone-200'}`}>{item}</button>
               ))}
             </div>
             <div className="grid gap-3 md:grid-cols-4">
               {section !== 'users' && (
-                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-800 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
                   <option value="all">All categories</option>
                   {TUNISIA_CATEGORIES.map(category => <option key={category}>{category}</option>)}
                 </select>
               )}
               {section === 'posts' && (
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-800 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
                   <option value="latest">Latest</option>
                   <option value="most-reported">Most reported</option>
                   <option value="most-discussed">Most discussed</option>
@@ -438,33 +438,33 @@ export default function DashboardPage() {
                 </select>
               )}
               {section === 'comments' && (
-                <select value={reportStatusFilter} onChange={(e) => setReportStatusFilter(e.target.value as typeof reportStatusFilter)} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                <select value={reportStatusFilter} onChange={(e) => setReportStatusFilter(e.target.value as typeof reportStatusFilter)} className="rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-800 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
                   <option value="open">Open reports</option>
                   <option value="reviewed">Reviewed</option>
                   <option value="dismissed">Dismissed</option>
                   <option value="all">All report statuses</option>
                 </select>
               )}
-              <input type="text" placeholder={section === 'users' ? 'Search users...' : 'Search title, user, city, category...'} className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 placeholder:text-slate-500 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:col-span-2" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <input type="text" placeholder={section === 'users' ? 'Search users...' : 'Search title, user, city, category...'} className="rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-950 placeholder:text-stone-500 shadow-[0_8px_24px_rgba(37,31,24,0.06)] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100 md:col-span-2" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
           </div>
 
           {section === 'posts' && (
-            <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-stone-200/80 pt-4">
               {(['pending', 'approved', 'reported', 'hidden', 'all'] as PostView[]).map(item => (
-                <button key={item} onClick={() => setPostView(item)} className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize ${postView === item ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>{item === 'hidden' ? 'Hidden/deleted' : `${item} posts`}</button>
+                <button key={item} onClick={() => setPostView(item)} className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize ${postView === item ? 'bg-teal-100 text-teal-800' : 'bg-stone-100 text-stone-800 hover:bg-stone-200'}`}>{item === 'hidden' ? 'Hidden/deleted' : `${item} posts`}</button>
               ))}
             </div>
           )}
         </div>
 
         {section === 'posts' && (
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            {paginatedItems.length === 0 ? <div className="p-6 text-center text-slate-500">No posts found.</div> : (
+          <div className="overflow-hidden rounded-lg border border-stone-200/80 bg-white shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
+            {paginatedItems.length === 0 ? <div className="p-6 text-center text-stone-500">No posts found.</div> : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50"><tr>{['Status', 'Title', 'Subject', 'Category', 'User', 'Engagement', 'Actions'].map(header => <th key={header} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{header}</th>)}</tr></thead>
-                  <tbody className="divide-y divide-slate-200 bg-white">{(paginatedItems as Post[]).map(renderPostRow)}</tbody>
+                <table className="min-w-full divide-y divide-stone-200/80">
+                  <thead className="bg-transparent"><tr>{['Status', 'Title', 'Subject', 'Category', 'User', 'Engagement', 'Actions'].map(header => <th key={header} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">{header}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-stone-200/80 bg-white">{(paginatedItems as Post[]).map(renderPostRow)}</tbody>
                 </table>
               </div>
             )}
@@ -472,18 +472,18 @@ export default function DashboardPage() {
         )}
 
         {section === 'comments' && (
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            {paginatedItems.length === 0 ? <div className="p-6 text-center text-slate-500">No reported comments found.</div> : <ul className="divide-y divide-slate-200">{(paginatedItems as Report[]).map(renderCommentReport)}</ul>}
+          <div className="overflow-hidden rounded-lg border border-stone-200/80 bg-white shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
+            {paginatedItems.length === 0 ? <div className="p-6 text-center text-stone-500">No reported comments found.</div> : <ul className="divide-y divide-stone-200/80">{(paginatedItems as Report[]).map(renderCommentReport)}</ul>}
           </div>
         )}
 
         {section === 'users' && (
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            {paginatedItems.length === 0 ? <div className="p-6 text-center text-slate-500">No users found.</div> : (
+          <div className="overflow-hidden rounded-lg border border-stone-200/80 bg-white shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
+            {paginatedItems.length === 0 ? <div className="p-6 text-center text-stone-500">No users found.</div> : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50"><tr>{['User', 'Joined', 'Activity', 'Status', 'Actions'].map(header => <th key={header} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{header}</th>)}</tr></thead>
-                  <tbody className="divide-y divide-slate-200 bg-white">{(paginatedItems as AdminUser[]).map(renderUserRow)}</tbody>
+                <table className="min-w-full divide-y divide-stone-200/80">
+                  <thead className="bg-transparent"><tr>{['User', 'Joined', 'Activity', 'Status', 'Actions'].map(header => <th key={header} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">{header}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-stone-200/80 bg-white">{(paginatedItems as AdminUser[]).map(renderUserRow)}</tbody>
                 </table>
               </div>
             )}
@@ -494,7 +494,7 @@ export default function DashboardPage() {
           <div className="mt-4 flex justify-center gap-2">
             {Array.from({ length: totalPages }, (_, index) => {
               const pageNumber = index + 1
-              return <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={currentPage === pageNumber ? 'rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white' : 'rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-200'}>{pageNumber}</button>
+              return <button key={pageNumber} onClick={() => setCurrentPage(pageNumber)} className={currentPage === pageNumber ? 'rounded-md bg-teal-700 px-3 py-1.5 text-sm font-medium text-white' : 'rounded-md bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-800 hover:bg-stone-200'}>{pageNumber}</button>
             })}
           </div>
         )}

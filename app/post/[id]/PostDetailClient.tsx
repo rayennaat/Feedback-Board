@@ -266,16 +266,16 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
     const childReplies = repliesByParent[comment.id] || []
 
     return (
-      <div key={comment.id} className={depth > 0 ? 'ml-4 border-l border-slate-200 pl-4 sm:ml-6' : ''}>
-        <div className="rounded-md border border-slate-200 p-4">
+      <div key={comment.id} className={depth > 0 ? 'ml-4 border-l border-stone-200/80 pl-4 sm:ml-6' : ''}>
+        <div className="rounded-md border border-stone-200/80 p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm leading-6 text-slate-700">{comment.message}</p>
-              <p className="mt-1 text-xs text-slate-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
+              <p className="text-sm leading-6 text-stone-700">{comment.message}</p>
+              <p className="mt-1 text-xs text-stone-500">By {comment.user} on {new Date(comment.date).toLocaleDateString()}{comment.isAnonymous ? ' · anonymous' : ''}</p>
             </div>
             <div className="flex gap-2 text-xs font-medium">
-              <button onClick={() => setReplyTarget(comment)} className="text-blue-600 hover:text-blue-800">Reply</button>
-              <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-slate-500 hover:text-slate-950">Report</button>
+              <button onClick={() => setReplyTarget(comment)} className="text-teal-700 hover:text-teal-800">Reply</button>
+              <button onClick={() => openReport({ type: 'comment', id: comment.id })} className="text-stone-500 hover:text-stone-950">Report</button>
               {comment.isCurrentUser && <button onClick={() => handleDeleteComment(comment.id)} className="text-red-600 hover:text-red-800">Delete</button>}
             </div>
           </div>
@@ -288,83 +288,83 @@ export default function PostDetailClient({ initialPost }: { initialPost: PostSta
   return (
     <article>
       <Toaster position="top-right" />
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-stone-200/80 bg-white p-6 shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{post.category}</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{post.experienceType}</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{post.city}</span>
+          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-800">{post.category}</span>
+          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-700">{post.experienceType}</span>
+          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-700">{post.city}</span>
         </div>
 
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">{post.title}</h1>
-        <p className="mt-2 text-sm font-medium text-slate-500">About {post.subject}</p>
-        <p className="mt-5 whitespace-pre-wrap text-base leading-7 text-slate-700">{post.message}</p>
-        {post.proofImageUrl && <Image src={post.proofImageUrl} alt="Proof attached to this post" width={1100} height={720} className="mt-5 max-h-[520px] w-full rounded-md border border-slate-200 bg-white object-contain" />}
+        <h1 className="mt-4 text-3xl font-bold tracking-tight text-stone-950">{post.title}</h1>
+        <p className="mt-2 text-sm font-medium text-stone-500">About {post.subject}</p>
+        <p className="mt-5 whitespace-pre-wrap text-base leading-7 text-stone-700">{post.message}</p>
+        {post.proofImageUrl && <Image src={post.proofImageUrl} alt="Proof attached to this post" width={1100} height={720} className="mt-5 max-h-[520px] w-full rounded-md border border-stone-200/80 bg-white object-contain" />}
 
-        <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-6 flex flex-col gap-3 border-t border-stone-200/80 pt-4 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <span>By {post.user}</span>
             <span>{new Date(post.date).toLocaleDateString()}</span>
             {post.isAnonymous && <span>Anonymous post</span>}
           </div>
           <div className="flex flex-wrap gap-3 font-medium">
-            <button onClick={handleLike} className={post.isLiked ? 'text-blue-700' : 'text-slate-600 hover:text-blue-700'}>{post.isLiked ? 'Liked' : 'Like'} {post.likes}</button>
-            <button onClick={handleSave} className={post.isSaved ? 'text-blue-700' : 'text-slate-600 hover:text-blue-700'}>{post.isSaved ? 'Saved' : 'Save'}</button>
-            <button onClick={handleShare} className="text-slate-600 hover:text-slate-950">Share</button>
-            <button onClick={() => openReport({ type: 'feedback', id: post.id })} className="text-slate-600 hover:text-slate-950">Report</button>
+            <button onClick={handleLike} className={post.isLiked ? 'text-teal-700' : 'text-stone-600 hover:text-teal-700'}>{post.isLiked ? 'Liked' : 'Like'} {post.likes}</button>
+            <button onClick={handleSave} className={post.isSaved ? 'text-teal-700' : 'text-stone-600 hover:text-teal-700'}>{post.isSaved ? 'Saved' : 'Save'}</button>
+            <button onClick={handleShare} className="text-stone-600 hover:text-stone-950">Share</button>
+            <button onClick={() => openReport({ type: 'feedback', id: post.id })} className="text-stone-600 hover:text-stone-950">Report</button>
           </div>
         </div>
 
         {!currentUser && (
-          <div className="mt-4 rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          <div className="mt-4 rounded-md border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-900">
             You can read this post publicly. <Link href="/login" className="font-semibold underline">Log in</Link> to like, reply, or report.
           </div>
         )}
       </div>
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-950">Replies ({post.commentsCount})</h2>
+      <section className="mt-6 rounded-lg border border-stone-200/80 bg-white p-6 shadow-[0_8px_24px_rgba(37,31,24,0.06)]">
+        <h2 className="text-xl font-semibold text-stone-950">Replies ({post.commentsCount})</h2>
         <div className="mt-4 space-y-3">
           {comments.length === 0 ? (
-            <p className="text-sm text-slate-500">No replies yet.</p>
+            <p className="text-sm text-stone-500">No replies yet.</p>
           ) : topLevelComments.map(comment => renderComment(comment))}
         </div>
 
         <div className="mt-5 space-y-3">
           {replyTarget && (
-            <div className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+            <div className="flex items-center justify-between rounded-md border border-teal-100 bg-teal-50 px-3 py-2 text-sm text-teal-900">
               <span>Replying to {replyTarget.user}</span>
-              <button onClick={() => setReplyTarget(null)} className="font-semibold hover:text-blue-700">Cancel</button>
+              <button onClick={() => setReplyTarget(null)} className="font-semibold hover:text-teal-700">Cancel</button>
             </div>
           )}
-          <textarea value={commentDraft} onChange={(e) => setCommentDraft(e.target.value)} rows={4} placeholder={replyTarget ? `Reply to ${replyTarget.user}...` : 'Reply with your experience or advice...'} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+          <textarea value={commentDraft} onChange={(e) => setCommentDraft(e.target.value)} rows={4} placeholder={replyTarget ? `Reply to ${replyTarget.user}...` : 'Reply with your experience or advice...'} className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-700 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <label className="flex items-center gap-2 text-sm text-slate-600">
+            <label className="flex items-center gap-2 text-sm text-stone-600">
               <input type="checkbox" checked={anonymousComment} onChange={(e) => setAnonymousComment(e.target.checked)} />
               Reply anonymously
             </label>
-            <button onClick={() => handleAddComment(replyTarget?.id)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">{replyTarget ? 'Reply' : 'Add Reply'}</button>
+            <button onClick={() => handleAddComment(replyTarget?.id)} className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">{replyTarget ? 'Reply' : 'Add Reply'}</button>
           </div>
         </div>
       </section>
 
       {reportingTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/40 px-4">
           <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-            <h2 className="text-lg font-semibold text-slate-950">Report content</h2>
+            <h2 className="text-lg font-semibold text-stone-950">Report content</h2>
             <div className="mt-4 space-y-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Reason</label>
-                <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                <label className="mb-1 block text-sm font-medium text-stone-700">Reason</label>
+                <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100">
                   {REPORT_REASONS.map(reason => <option key={reason}>{reason}</option>)}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Details</label>
-                <textarea value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} rows={4} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" placeholder="Add context for the moderator." />
+                <label className="mb-1 block text-sm font-medium text-stone-700">Details</label>
+                <textarea value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} rows={4} className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" placeholder="Add context for the moderator." />
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setReportingTarget(null)} className="rounded-md bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-200">Cancel</button>
+              <button onClick={() => setReportingTarget(null)} className="rounded-md bg-stone-100 px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-200">Cancel</button>
               <button onClick={handleSubmitReport} className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Submit Report</button>
             </div>
           </div>

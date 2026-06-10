@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -37,84 +38,81 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-950">
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl items-center justify-center">
-        <div className="grid w-full gap-6 lg:grid-cols-[1fr_380px]">
-          <section className="hidden rounded-lg border border-slate-200 bg-white p-8 shadow-sm lg:block">
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Feedback TN</p>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">Sign in to share and review Tunisian experiences.</h1>
-            <p className="mt-4 leading-7 text-slate-600">
-              People can share reviews, warnings, questions, and recommendations from across Tunisia in Tounsi, Arabic, French, or English. Admins keep the community useful and respectful.
-            </p>
-            <div className="mt-8 rounded-md border border-blue-100 bg-blue-50 p-4">
-              <h2 className="font-semibold text-blue-950">Demo admin</h2>
-              <dl className="mt-3 space-y-2 text-sm text-blue-900">
-                <div className="flex justify-between gap-4">
-                  <dt className="font-medium">Email</dt>
-                  <dd className="font-mono">admin@gmail.com</dd>
+    <main className="app-shell px-4 py-6">
+      <div className="app-container flex min-h-[calc(100vh-3rem)] items-center justify-center">
+        <div className="grid w-full max-w-6xl gap-5 lg:grid-cols-[1fr_430px]">
+          <section className="premium-surface hidden overflow-hidden p-8 lg:block">
+            <div className="flex h-full flex-col justify-between rounded-2xl bg-stone-950 p-8 text-white shadow-2xl shadow-stone-900/20">
+              <div>
+                <Link href="/" className="inline-flex items-center gap-3 text-sm font-black text-white">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-xs">TN</span>
+                  Feedback TN
+                </Link>
+                <p className="mt-12 text-sm font-bold uppercase tracking-[0.2em] text-teal-200">Trust and safety first</p>
+                <h1 className="mt-4 max-w-xl text-5xl font-black leading-tight tracking-tight">Moderated community feedback for Tunisia.</h1>
+                <p className="mt-5 max-w-xl text-lg leading-8 text-stone-300">
+                  Sign in to share experiences, follow replies, save useful posts, and help keep public discovery clean through reports and moderation.
+                </p>
+              </div>
+
+              <div className="mt-10 rounded-2xl border border-white/10 bg-white/10 p-5">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-1 h-5 w-5 text-teal-200" />
+                  <div>
+                    <h2 className="font-black">Demo admin</h2>
+                    <p className="mt-1 text-sm text-stone-300">Use this account to inspect the moderation dashboard.</p>
+                  </div>
                 </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="font-medium">Password</dt>
-                  <dd className="font-mono">admin</dd>
-                </div>
-              </dl>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@gmail.com')
-                  setPassword('admin')
-                }}
-                className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Fill demo credentials
-              </button>
+                <dl className="mt-4 grid gap-3 text-sm text-stone-200">
+                  <div className="flex justify-between gap-4 rounded-xl bg-white/10 px-3 py-2"><dt>Email</dt><dd className="font-mono">admin@gmail.com</dd></div>
+                  <div className="flex justify-between gap-4 rounded-xl bg-white/10 px-3 py-2"><dt>Password</dt><dd className="font-mono">admin</dd></div>
+                </dl>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@gmail.com')
+                    setPassword('admin')
+                  }}
+                  className="mt-4 w-full rounded-xl bg-white px-4 py-2.5 text-sm font-black text-stone-950 hover:bg-teal-50"
+                >
+                  Fill demo credentials
+                </button>
+              </div>
             </div>
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <Link href="/" className="text-sm font-medium text-slate-500 hover:text-slate-950">Feedback TN</Link>
-            <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-950">Log in</h1>
-            <p className="mt-2 text-sm text-slate-600">Use your account to continue to the community feed.</p>
+          <section className="premium-surface p-6 sm:p-8">
+            <Link href="/" className="inline-flex items-center gap-3 text-sm font-black text-stone-950">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700 text-xs text-white">TN</span>
+              Feedback TN
+            </Link>
+            <p className="eyebrow mt-9">Welcome back</p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-stone-950">Log in to your account</h1>
+            <p className="mt-2 text-sm leading-6 text-stone-600">Continue to your feed, saved posts, notifications, or admin dashboard.</p>
 
-            <form onSubmit={handleLogin} className="mt-6 space-y-5">
+            <form onSubmit={handleLogin} className="mt-7 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-300 px-4 py-2.5 text-slate-950 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
+                <label className="block text-sm font-bold text-stone-700">Email</label>
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field mt-1 px-4 py-3" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Password</label>
+                <label className="block text-sm font-bold text-stone-700">Password</label>
                 <div className="relative mt-1">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-4 py-2.5 pr-16 text-slate-950 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500 hover:text-slate-900"
-                  >
-                    {showPassword ? 'Hide' : 'Show'}
+                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} className="field px-4 py-3 pr-12" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} title={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-950">
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
-              {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</p>}
-              <button type="submit" className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
-                Log in
+              {error && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700">{error}</p>}
+              <button type="submit" className="btn-primary w-full px-4 py-3 text-sm">
+                Log in <ArrowRight className="ml-2 h-4 w-4" />
               </button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-slate-600">
+            <p className="mt-7 text-center text-sm text-stone-600">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="font-semibold text-blue-700 hover:text-blue-800">Sign up</Link>
+              <Link href="/signup" className="font-black text-teal-700 hover:text-teal-800">Sign up</Link>
             </p>
           </section>
         </div>

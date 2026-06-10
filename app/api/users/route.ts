@@ -1,29 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET!
-
-interface JwtPayload {
-  id: number
-  username: string
-}
+import { requireAdmin } from '@/lib/security'
 
 export async function GET(req: NextRequest) {
-  const token = req.cookies.get('authToken')?.value
-
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
-    const admin = await prisma.user.findUnique({ where: { id: decoded.id } })
-
-    if (!admin?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
